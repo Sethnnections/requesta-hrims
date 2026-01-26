@@ -34,20 +34,14 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-requesta-background to-white p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-requesta-background to-white p-2">
       <Card className="w-full max-w-md shadow-requesta-lg border-requesta-primary/20">
         <CardHeader className="space-y-1">
-          <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 bg-requesta-primary rounded-full flex items-center justify-center">
-              <span className="text-2xl font-bold text-white">R</span>
+          <div className="flex justify-center mb-2">
+            <div className="w-22 h-25  flex items-center justify-center">
+              <img src="/images/logo2.png" alt="Requesta logo" className="w-full h-full object-cover rounded-full" />
             </div>
           </div>
-          <CardTitle className="text-2xl text-center text-requesta-primary">
-            Requesta HRIMS
-          </CardTitle>
-          <CardDescription className="text-center">
-            Human Resource Information Management System
-          </CardDescription>
         </CardHeader>
         
         <CardContent>
@@ -127,13 +121,7 @@ export default function LoginPage() {
         </CardContent>
 
         <CardFooter className="flex flex-col space-y-4">
-          <div className="text-center text-sm text-gray-600">
-            <p className="font-medium">Demo Credentials</p>
-            <div className="mt-2 space-y-1 font-mono text-xs bg-gray-50 p-3 rounded-md">
-              <p>Email: ceo@sethnnections.mw</p>
-              <p>Password: CEO123!</p>
-            </div>
-          </div>
+        
           
           <div className="text-center text-sm">
             <span className="text-gray-600">Need help? </span>
