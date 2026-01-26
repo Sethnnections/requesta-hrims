@@ -1,0 +1,43 @@
+:root {
+  /* Requesta Theme Colors - HSL format for better theming */
+  --requesta-primary: 164 76% 17%;
+  --requesta-primary-light: 164 76% 22%;
+  --requesta-secondary: 165 44% 35%;
+  --requesta-background: 165 45% 93%;
+  --requesta-accent: 37 89% 53%;
+  --requesta-accent-light: 37 89% 60%;
+  
+  /* Update existing variables to use Requesta colors */
+  --background: 0 0% 100%;
+  --foreground: var(--requesta-text-primary);
+  --primary: var(--requesta-primary);
+  --primary-foreground: 0 0% 100%;
+  --secondary: var(--requesta-secondary);
+  --secondary-foreground: 0 0% 100%;
+  --accent: var(--requesta-accent);
+  --accent-foreground: 0 0% 100%;
+  
+  /* Border colors */
+  --border: 165 45% 93%;
+  --input: 165 45% 93%;
+  --ring: var(--requesta-primary);
+  
+  /* Text colors */
+  --requesta-text-primary: 210 33% 19%;
+  --requesta-text-secondary: 220 8% 44%;
+  --requesta-text-disabled: 220 8% 64%;
+}
+
+.dark {
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+  --primary: var(--requesta-primary-light);
+  --primary-foreground: 222.2 47.4% 11.2%;
+  --secondary: var(--requesta-secondary);
+  --secondary-foreground: 210 40% 98%;
+  --accent: var(--requesta-accent-light);
+  --accent-foreground: 222.2 47.4% 11.2%;
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: var(--requesta-primary-light);
+}

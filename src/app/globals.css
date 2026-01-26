@@ -1,0 +1,123 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 255, 255, 255;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
+
+/* Custom Requesta Theme Classes */
+.text-requesta-primary {
+  color: #0B4F3F;
+}
+
+.bg-requesta-primary {
+  background-color: #0B4F3F;
+}
+
+.hover\:bg-requesta-primary-light:hover {
+  background-color: #145E4D;
+}
+
+.text-requesta-secondary {
+  color: #2E7D6B;
+}
+
+.bg-requesta-secondary {
+  background-color: #2E7D6B;
+}
+
+.bg-requesta-background {
+  background-color: #E6F2EF;
+}
+
+.bg-requesta-accent {
+  background-color: #F2A01F;
+}
+
+.hover\:bg-requesta-accent-light:hover {
+  background-color: #F6B74A;
+}
+
+.border-requesta-primary {
+  border-color: #0B4F3F;
+}
+
+.hover\:border-requesta-primary:hover {
+  border-color: #145E4D;
+}
+
+.shadow-requesta-lg {
+  box-shadow: 0 10px 40px rgba(11, 79, 63, 0.15);
+}
+
+.bg-requesta-primary\/10 {
+  background-color: rgba(11, 79, 63, 0.1);
+}
+
+.border-requesta-primary\/20 {
+  border-color: rgba(11, 79, 63, 0.2);
+}
+
+/* Custom utility classes */
+.btn-primary {
+  @apply bg-requesta-primary text-white hover:bg-requesta-primary-light transition-colors px-4 py-2 rounded-md;
+}
+
+.card-requesta {
+  @apply bg-white rounded-lg border border-gray-200 shadow-lg;
+}
+
+.status-approved {
+  @apply bg-green-100 text-green-800 border border-green-200;
+}
+
+.status-pending {
+  @apply bg-yellow-100 text-yellow-800 border border-yellow-200;
+}
+
+.status-rejected {
+  @apply bg-red-100 text-red-800 border border-red-200;
+}
+
+/* Scrollbar */
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background-color: #f1f1f1;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
+}
