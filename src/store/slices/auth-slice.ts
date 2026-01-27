@@ -1,9 +1,10 @@
 import { create } from 'zustand'
 import { persist, PersistOptions } from 'zustand/middleware'
-import { User } from '@/types/auth/user'
+import { User, UserProfile } from '@/types/auth/user'
 
 interface AuthState {
   user: User | null
+  profile: UserProfile | null // Add profile here too
   accessToken: string | null
   refreshToken: string | null
   isAuthenticated: boolean
@@ -27,6 +28,7 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
+      profile: null,
       accessToken: null,
       refreshToken: null,
       isAuthenticated: false,
