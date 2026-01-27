@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/slices/auth-slice'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -9,73 +8,68 @@ import { Briefcase, Users, FileText, BarChart, ArrowUpRight, Clock, Banknote, Pl
 
 export default function DashboardPage() {
   const router = useRouter()
-  const { user, isAuthenticated } = useAuthStore()
+  const { user } = useAuthStore()
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/login')
-    }
-  }, [isAuthenticated, router])
 
-  if (!user) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-requesta-primary"></div>
-      </div>
-    )
-  }
+  const stats = [
+    {
+      title: 'Pending Approvals',
+      value: '3',
+      icon: FileText,
+      color: 'bg-requesta-accent',
+      href: '/workflows/approvals',
+    },
+    {
+      title: 'Team Members',
+      value: '8',
+      icon: Users,
+      color: 'bg-requesta-secondary',
+      href: '/employees/directory',
+    },
+    {
+      title: 'Active Loans',
+      value: '2',
+      icon: Banknote,
+      color: 'bg-requesta-primary',
+      href: '/loans/applications',
+    },
+    {
+      title: 'Travel Requests',
+      value: '1',
+      icon: Plane,
+      color: 'bg-requesta-primary-light',
+      href: '/travel/requests',
+    },
+    {
+      title: 'Overtime Claims',
+      value: '4',
+      icon: Clock,
+      color: 'bg-requesta-accent-light',
+      href: '/overtime/claims',
+    },
+    {
+      title: 'Reports Generated',
+      value: '12',
+      icon: BarChart,
+      color: 'bg-requesta-secondary/80',
+      href: '/reports',
+    },
+  ]
 
-// Update dashboard stats to use theme colors
-const stats = [
-  {
-    title: 'Pending Approvals',
-    value: '3',
-    icon: FileText,
-    color: 'bg-requesta-accent', // Using theme accent
-    href: '/workflows/approvals',
-  },
-  {
-    title: 'Team Members',
-    value: '8',
-    icon: Users,
-    color: 'bg-requesta-secondary', // Using theme secondary
-    href: '/employees/directory',
-  },
-  {
-    title: 'Active Loans',
-    value: '2',
-    icon: Banknote,
-    color: 'bg-requesta-primary', // Using theme primary
-    href: '/loans/applications',
-  },
-  {
-    title: 'Travel Requests',
-    value: '1',
-    icon: Plane,
-    color: 'bg-requesta-primary-light', // Using theme primary light
-    href: '/travel/requests',
-  },
-  {
-    title: 'Overtime Claims',
-    value: '4',
-    icon: Clock,
-    color: 'bg-requesta-accent-light', // Using theme accent light
-    href: '/overtime/claims',
-  },
-  {
-    title: 'Reports Generated',
-    value: '12',
-    icon: BarChart,
-    color: 'bg-requesta-secondary/80', // Using theme secondary with opacity
-    href: '/reports',
-  },
-]
   const quickActions = [
     { label: 'Apply for Loan', href: '/loans/applications/create', icon: Banknote },
     { label: 'Request Travel', href: '/travel/requests/create', icon: Plane },
     { label: 'Claim Overtime', href: '/overtime/claims/create', icon: Clock },
     { label: 'View Payslip', href: '/payroll/payslips', icon: FileText },
   ]
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-requesta-primary"></div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">

@@ -1,0 +1,235 @@
+import { User, UserRole } from "@/types/auth/user"
+
+export const PERMISSIONS = {
+  // System level
+  SYSTEM_FULL_ACCESS: 'system:full_access',
+  
+  // User management
+  USERS_MANAGE_SUPER_ADMINS: 'users:manage_super_admins',
+  USERS_MANAGE_ALL: 'users:manage_all',
+  USERS_MANAGE_PERMISSIONS: 'users:manage_permissions',
+  
+  // Role management
+  ROLES_MANAGE_ALL: 'roles:manage_all',
+  
+  // Employee management
+  EMPLOYEES_MANAGE_ALL: 'employees:manage_all',
+  
+  // Department management
+  DEPARTMENT_MANAGE: 'department:manage',
+  
+  // Team management
+  TEAM_MANAGE: 'team:manage',
+  
+  // Direct reports
+  DIRECT_REPORTS_MANAGE: 'direct_reports:manage',
+  
+  // Approvals
+  APPROVALS_DEPARTMENT: 'approvals:department',
+  APPROVALS_TEAM: 'approvals:team',
+  APPROVALS_DIRECT_REPORTS: 'approvals:direct_reports',
+  
+  // Profile
+  PROFILE_MANAGE: 'profile:manage',
+  
+  // Requests
+  REQUESTS_CREATE: 'requests:create',
+  
+  // Additional permissions for your system
+  LOANS_MANAGE: 'loans:manage',
+  LOANS_APPROVE: 'loans:approve',
+  TRAVEL_MANAGE: 'travel:manage',
+  TRAVEL_APPROVE: 'travel:approve',
+  OVERTIME_MANAGE: 'overtime:manage',
+  OVERTIME_APPROVE: 'overtime:approve',
+  PAYROLL_MANAGE: 'payroll:manage',
+  REPORTS_VIEW: 'reports:view',
+  REPORTS_GENERATE: 'reports:generate',
+  AUDIT_LOGS_VIEW: 'audit_logs:view',
+  SETTINGS_MANAGE: 'settings:manage',
+} as const
+
+export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS]
+
+// Role to permissions mapping
+export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
+  [UserRole.SUPER_SUPER_ADMIN]: [
+    PERMISSIONS.SYSTEM_FULL_ACCESS,
+    PERMISSIONS.USERS_MANAGE_SUPER_ADMINS,
+    PERMISSIONS.USERS_MANAGE_ALL,
+    PERMISSIONS.ROLES_MANAGE_ALL,
+    PERMISSIONS.USERS_MANAGE_PERMISSIONS,
+    PERMISSIONS.EMPLOYEES_MANAGE_ALL,
+    PERMISSIONS.DEPARTMENT_MANAGE,
+    PERMISSIONS.APPROVALS_DEPARTMENT,
+    PERMISSIONS.TEAM_MANAGE,
+    PERMISSIONS.APPROVALS_TEAM,
+    PERMISSIONS.DIRECT_REPORTS_MANAGE,
+    PERMISSIONS.APPROVALS_DIRECT_REPORTS,
+    PERMISSIONS.PROFILE_MANAGE,
+    PERMISSIONS.REQUESTS_CREATE,
+    PERMISSIONS.LOANS_MANAGE,
+    PERMISSIONS.LOANS_APPROVE,
+    PERMISSIONS.TRAVEL_MANAGE,
+    PERMISSIONS.TRAVEL_APPROVE,
+    PERMISSIONS.OVERTIME_MANAGE,
+    PERMISSIONS.OVERTIME_APPROVE,
+    PERMISSIONS.PAYROLL_MANAGE,
+    PERMISSIONS.REPORTS_VIEW,
+    PERMISSIONS.REPORTS_GENERATE,
+    PERMISSIONS.AUDIT_LOGS_VIEW,
+    PERMISSIONS.SETTINGS_MANAGE,
+  ],
+  
+  [UserRole.SUPER_ADMIN]: [
+    PERMISSIONS.USERS_MANAGE_ALL,
+    PERMISSIONS.ROLES_MANAGE_ALL,
+    PERMISSIONS.EMPLOYEES_MANAGE_ALL,
+    PERMISSIONS.DEPARTMENT_MANAGE,
+    PERMISSIONS.APPROVALS_DEPARTMENT,
+    PERMISSIONS.TEAM_MANAGE,
+    PERMISSIONS.APPROVALS_TEAM,
+    PERMISSIONS.DIRECT_REPORTS_MANAGE,
+    PERMISSIONS.APPROVALS_DIRECT_REPORTS,
+    PERMISSIONS.PROFILE_MANAGE,
+    PERMISSIONS.REQUESTS_CREATE,
+    PERMISSIONS.LOANS_MANAGE,
+    PERMISSIONS.LOANS_APPROVE,
+    PERMISSIONS.TRAVEL_MANAGE,
+    PERMISSIONS.TRAVEL_APPROVE,
+    PERMISSIONS.OVERTIME_MANAGE,
+    PERMISSIONS.OVERTIME_APPROVE,
+    PERMISSIONS.PAYROLL_MANAGE,
+    PERMISSIONS.REPORTS_VIEW,
+    PERMISSIONS.REPORTS_GENERATE,
+    PERMISSIONS.AUDIT_LOGS_VIEW,
+    PERMISSIONS.SETTINGS_MANAGE,
+  ],
+  
+  [UserRole.SYSTEM_ADMIN]: [
+    PERMISSIONS.EMPLOYEES_MANAGE_ALL,
+    PERMISSIONS.DEPARTMENT_MANAGE,
+    PERMISSIONS.TEAM_MANAGE,
+    PERMISSIONS.PROFILE_MANAGE,
+    PERMISSIONS.REQUESTS_CREATE,
+    PERMISSIONS.LOANS_MANAGE,
+    PERMISSIONS.TRAVEL_MANAGE,
+    PERMISSIONS.OVERTIME_MANAGE,
+    PERMISSIONS.PAYROLL_MANAGE,
+    PERMISSIONS.REPORTS_VIEW,
+    PERMISSIONS.SETTINGS_MANAGE,
+  ],
+  
+  [UserRole.HR_ADMIN]: [
+    PERMISSIONS.EMPLOYEES_MANAGE_ALL,
+    PERMISSIONS.DEPARTMENT_MANAGE,
+    PERMISSIONS.TEAM_MANAGE,
+    PERMISSIONS.PROFILE_MANAGE,
+    PERMISSIONS.REQUESTS_CREATE,
+    PERMISSIONS.LOANS_APPROVE,
+    PERMISSIONS.TRAVEL_APPROVE,
+    PERMISSIONS.OVERTIME_APPROVE,
+    PERMISSIONS.REPORTS_VIEW,
+    PERMISSIONS.REPORTS_GENERATE,
+  ],
+  
+  [UserRole.HR_MANAGER]: [
+    PERMISSIONS.EMPLOYEES_MANAGE_ALL,
+    PERMISSIONS.DEPARTMENT_MANAGE,
+    PERMISSIONS.APPROVALS_DEPARTMENT,
+    PERMISSIONS.TEAM_MANAGE,
+    PERMISSIONS.APPROVALS_TEAM,
+    PERMISSIONS.PROFILE_MANAGE,
+    PERMISSIONS.REQUESTS_CREATE,
+    PERMISSIONS.LOANS_APPROVE,
+    PERMISSIONS.TRAVEL_APPROVE,
+    PERMISSIONS.OVERTIME_APPROVE,
+    PERMISSIONS.REPORTS_VIEW,
+  ],
+  
+  [UserRole.FINANCE_MANAGER]: [
+    PERMISSIONS.LOANS_MANAGE,
+    PERMISSIONS.LOANS_APPROVE,
+    PERMISSIONS.TRAVEL_APPROVE,
+    PERMISSIONS.OVERTIME_APPROVE,
+    PERMISSIONS.PAYROLL_MANAGE,
+    PERMISSIONS.REPORTS_VIEW,
+    PERMISSIONS.REPORTS_GENERATE,
+  ],
+  
+  [UserRole.DEPARTMENT_HEAD]: [
+    PERMISSIONS.DEPARTMENT_MANAGE,
+    PERMISSIONS.APPROVALS_DEPARTMENT,
+    PERMISSIONS.TEAM_MANAGE,
+    PERMISSIONS.APPROVALS_TEAM,
+    PERMISSIONS.DIRECT_REPORTS_MANAGE,
+    PERMISSIONS.APPROVALS_DIRECT_REPORTS,
+    PERMISSIONS.PROFILE_MANAGE,
+    PERMISSIONS.REQUESTS_CREATE,
+    PERMISSIONS.REPORTS_VIEW,
+  ],
+  
+  [UserRole.MANAGER]: [
+    PERMISSIONS.TEAM_MANAGE,
+    PERMISSIONS.APPROVALS_TEAM,
+    PERMISSIONS.DIRECT_REPORTS_MANAGE,
+    PERMISSIONS.APPROVALS_DIRECT_REPORTS,
+    PERMISSIONS.PROFILE_MANAGE,
+    PERMISSIONS.REQUESTS_CREATE,
+    PERMISSIONS.REPORTS_VIEW,
+  ],
+  
+  [UserRole.SUPERVISOR]: [
+    PERMISSIONS.DIRECT_REPORTS_MANAGE,
+    PERMISSIONS.APPROVALS_DIRECT_REPORTS,
+    PERMISSIONS.PROFILE_MANAGE,
+    PERMISSIONS.REQUESTS_CREATE,
+  ],
+  
+  [UserRole.TRAVEL_ADMIN]: [
+    PERMISSIONS.TRAVEL_MANAGE,
+    PERMISSIONS.TRAVEL_APPROVE,
+    PERMISSIONS.REQUESTS_CREATE,
+    PERMISSIONS.REPORTS_VIEW,
+  ],
+  
+  [UserRole.ADMIN_EMPLOYEE]: [
+    PERMISSIONS.PROFILE_MANAGE,
+    PERMISSIONS.REQUESTS_CREATE,
+    PERMISSIONS.REPORTS_VIEW,
+  ],
+  
+  [UserRole.EMPLOYEE]: [
+    PERMISSIONS.PROFILE_MANAGE,
+    PERMISSIONS.REQUESTS_CREATE,
+  ],
+}
+
+// Helper functions
+export function hasPermission(user: User | null, permission: Permission): boolean {
+  if (!user) return false
+  return user.permissions.includes(permission)
+}
+
+export function hasAnyPermission(user: User | null, permissions: Permission[]): boolean {
+  if (!user) return false
+  return permissions.some(permission => user.permissions.includes(permission))
+}
+
+export function hasAllPermissions(user: User | null, permissions: Permission[]): boolean {
+  if (!user) return false
+  return permissions.every(permission => user.permissions.includes(permission))
+}
+
+export function canAccessRoute(user: User | null, requiredPermissions: Permission[]): boolean {
+  if (!user) return false
+  if (user.permissions.includes(PERMISSIONS.SYSTEM_FULL_ACCESS)) return true
+  return requiredPermissions.some(permission => user.permissions.includes(permission))
+}
+
+export function getUserRoleDisplay(role: UserRole): string {
+  return role
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+}

@@ -10,38 +10,68 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useAuth } from '@/hooks/auth/use-auth'
+import { useAuthStore } from '@/store/slices/auth-slice' // Add this import
 
 export default function LoginPage() {
   const router = useRouter()
   const { login, isLoading } = useAuth()
+  const { user, isAuthenticated } = useAuthStore() // Get auth state
   const [showPassword, setShowPassword] = useState(false)
   const [formData, setFormData] = useState({
-    identifier: '',
-    password: '',
+    identifier: 'ceo@sethnnections.mw', // Pre-fill for testing
+    password: 'CEO123!', // Pre-fill for testing
   })
   const [error, setError] = useState('')
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
+  // Debug: Check current auth state
+  console.log('Login Page - Auth State:', { 
+    user, 
+    isAuthenticated,
+    isLoading 
+  })
 
-    try {
-      await login(formData.identifier, formData.password)
-      router.push('/dashboard')
-    } catch (err: any) {
-      setError(err.message || 'Invalid credentials. Please try again.')
-    }
-  }
+ // app/(auth)/login/page.tsx - Updated handleSubmit
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault()
+  setError('')
+  
+  console.log('Login attempt with:', {
+    identifier: formData.identifier,
+    password: formData.password
+  })
+
+try {
+  const result = await login(formData.identifier, formData.password)
+  console.log('Login successful! Response:', result)
+  
+  // Wait for state to update
+  await new Promise(resolve => setTimeout(resolve, 200))
+  
+  // Force hard redirect to dashboard
+  window.location.href = '/dashboard'
+  
+} catch (err: any) {
+  console.error('Login error:', err)
+  setError(err.message || 'Invalid credentials. Please try again.')
+}
+}
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-requesta-background to-white p-2">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-requesta-background to-white p-4">
       <Card className="w-full max-w-md shadow-requesta-lg border-requesta-primary/20">
         <CardHeader className="space-y-1">
-          <div className="flex justify-center mb-2">
-            <div className="w-22 h-25  flex items-center justify-center">
-              <img src="/images/logo2.png" alt="Requesta logo" className="w-full h-full object-cover rounded-full" />
+          <div className="flex justify-center mb-4">
+            {/* Fixed logo */}
+            <div className="w-16 h-16 bg-requesta-primary rounded-full flex items-center justify-center">
+              <span className="text-2xl font-bold text-white">R</span>
             </div>
           </div>
+          <CardTitle className="text-2xl text-center text-requesta-primary">
+            Requesta HRIMS
+          </CardTitle>
+          <CardDescription className="text-center">
+            Human Resource Information Management System
+          </CardDescription>
         </CardHeader>
         
         <CardContent>
@@ -121,7 +151,13 @@ export default function LoginPage() {
         </CardContent>
 
         <CardFooter className="flex flex-col space-y-4">
-        
+          <div className="text-center text-sm text-gray-600">
+            <p className="font-medium">Demo Credentials</p>
+            <div className="mt-2 space-y-1 font-mono text-xs bg-gray-50 p-3 rounded-md">
+              <p>Email: ceo@sethnnections.mw</p>
+              <p>Password: CEO123!</p>
+            </div>
+          </div>
           
           <div className="text-center text-sm">
             <span className="text-gray-600">Need help? </span>
