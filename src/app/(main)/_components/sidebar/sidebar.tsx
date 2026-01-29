@@ -136,19 +136,6 @@ const iconMap: Record<string, React.ComponentType<any>> = {
       <line x1="21" y1="12" x2="9" y2="12" />
     </svg>
   ),
-  
-  // Chevron left/right
-  'chevron-left': () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="15 18 9 12 15 6" />
-    </svg>
-  ),
-  
-  'chevron-right': () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="9 18 15 12 9 6" />
-    </svg>
-  ),
 }
 
 export function Sidebar() {
@@ -162,9 +149,14 @@ export function Sidebar() {
   
   const navigationItems = getNavigationItems()
   
+  // Add settings and help items if not already included
   const secondaryItems = [
-    { name: 'Settings', href: '/settings', icon: 'settings' },
-    { name: 'Help & Support', href: '/help', icon: 'help-circle' },
+    ...(navigationItems.find(item => item.name === 'Settings') ? [] : [
+      { name: 'Settings', href: '/settings', icon: 'settings' }
+    ]),
+    ...(navigationItems.find(item => item.name === 'Help & Support') ? [] : [
+      { name: 'Help & Support', href: '/help-support', icon: 'help-circle' }
+    ])
   ]
 
   return (
@@ -267,46 +259,50 @@ export function Sidebar() {
             })}
           </div>
 
-          {/* Divider */}
-          <div className="my-4 px-3">
-            <div className="h-px bg-white/20"></div>
-          </div>
+          {/* Divider - Only show if there are secondary items */}
+          {secondaryItems.length > 0 && (
+            <>
+              <div className="my-4 px-3">
+                <div className="h-px bg-white/20"></div>
+              </div>
 
-          {/* Secondary Navigation */}
-          <div className="space-y-1 px-2">
-            {secondaryItems.map((item) => {
-              const Icon = iconMap[item.icon] || iconMap['home']
-              const isActive = pathname === item.href
-              
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={cn(
-                    'group flex items-center rounded-lg px-3 py-3 text-sm font-medium transition-colors relative',
-                    isActive
-                      ? 'bg-emerald-500/20 text-white' // Green shade for active
-                      : 'text-white/90 hover:bg-white/10 hover:text-white',
-                    collapsed && 'justify-center'
-                  )}
-                >
-                  <Icon className={cn(
-                    'h-5 w-5 flex-shrink-0',
-                    isActive 
-                      ? 'text-yellow-500' // Yellow for active icons
-                      : 'text-yellow-500/90 group-hover:text-yellow-400', // Yellow-500 for normal
-                    !collapsed && 'mr-3'
-                  )} />
-                  {!collapsed && <span>{item.name}</span>}
-                  {collapsed && (
-                    <div className="absolute left-full ml-2 hidden rounded-md bg-gray-900 px-2 py-1 text-xs text-white group-hover:block z-50">
-                      {item.name}
-                    </div>
-                  )}
-                </Link>
-              )
-            })}
-          </div>
+              {/* Secondary Navigation */}
+              <div className="space-y-1 px-2">
+                {secondaryItems.map((item) => {
+                  const Icon = iconMap[item.icon] || iconMap['home']
+                  const isActive = pathname === item.href
+                  
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className={cn(
+                        'group flex items-center rounded-lg px-3 py-3 text-sm font-medium transition-colors relative',
+                        isActive
+                          ? 'bg-emerald-500/20 text-white' // Green shade for active
+                          : 'text-white/90 hover:bg-white/10 hover:text-white',
+                        collapsed && 'justify-center'
+                      )}
+                    >
+                      <Icon className={cn(
+                        'h-5 w-5 flex-shrink-0',
+                        isActive 
+                          ? 'text-yellow-500' // Yellow for active icons
+                          : 'text-yellow-500/90 group-hover:text-yellow-400', // Yellow-500 for normal
+                        !collapsed && 'mr-3'
+                      )} />
+                      {!collapsed && <span>{item.name}</span>}
+                      {collapsed && (
+                        <div className="absolute left-full ml-2 hidden rounded-md bg-gray-900 px-2 py-1 text-xs text-white group-hover:block z-50">
+                          {item.name}
+                        </div>
+                      )}
+                    </Link>
+                  )
+                })}
+              </div>
+            </>
+          )}
         </nav>
       </div>
 
@@ -338,11 +334,13 @@ export function Sidebar() {
             'flex items-center',
             collapsed ? 'justify-center' : 'space-x-3'
           )}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-              <polyline points="16 17 21 12 16 7" />
-              <line x1="21" y1="12" x2="9" y2="12" />
-            </svg>
+            <div className="h-5 w-5 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+            </div>
             {!collapsed && <span>Logout</span>}
           </div>
         </Button>

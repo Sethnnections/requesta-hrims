@@ -1,0 +1,201 @@
+<!-- 'use client'
+
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import { HelpCircle, Mail, Phone, MessageSquare, FileText, Video } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { ArrowLeft } from 'lucide-react'
+
+export default function HelpSupportPage() {
+  const router = useRouter()
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-4">
+        <Button
+          variant="ghost"
+          onClick={() => router.back()}
+          className="text-gray-600"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
+        <div>
+          <h1 className="text-3xl font-bold text-requesta-primary">Help & Support</h1>
+          <p className="text-gray-600">Get assistance and find answers to your questions</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Quick Help Cards */}
+        <div className="lg:col-span-2 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>How can we help you?</CardTitle>
+              <CardDescription>
+                Choose a category or search for help articles
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Button
+                  variant="outline"
+                  className="h-24 flex flex-col items-center justify-center"
+                  onClick={() => router.push('/help-support/faq')}
+                >
+                  <HelpCircle className="h-8 w-8 text-requesta-primary mb-2" />
+                  <span>FAQs</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-24 flex flex-col items-center justify-center"
+                  onClick={() => router.push('/help-support/user-guides')}
+                >
+                  <FileText className="h-8 w-8 text-requesta-primary mb-2" />
+                  <span>User Guides</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-24 flex flex-col items-center justify-center"
+                  onClick={() => router.push('/help-support/tutorials')}
+                >
+                  <Video className="h-8 w-8 text-requesta-primary mb-2" />
+                  <span>Video Tutorials</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-24 flex flex-col items-center justify-center"
+                  onClick={() => router.push('/help-support/system-status')}
+                >
+                  <MessageSquare className="h-8 w-8 text-requesta-primary mb-2" />
+                  <span>System Status</span>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Contact Form */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Contact Support</CardTitle>
+              <CardDescription>
+                Send us a message and we'll get back to you within 24 hours
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Name</Label>
+                    <Input id="name" placeholder="Your name" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" type="email" placeholder="your.email@company.com" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="subject">Subject</Label>
+                  <Input id="subject" placeholder="What do you need help with?" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="message">Message</Label>
+                  <Textarea 
+                    id="message" 
+                    placeholder="Describe your issue or question in detail..."
+                    className="min-h-[120px]"
+                  />
+                </div>
+                <Button type="submit" className="bg-requesta-primary hover:bg-requesta-primary-light">
+                  Send Message
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Contact Information */}
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Contact Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-3 p-3 border rounded-lg">
+                <div className="p-2 bg-requesta-primary/10 rounded-full">
+                  <Mail className="h-5 w-5 text-requesta-primary" />
+                </div>
+                <div>
+                  <div className="text-sm text-gray-500">Email Support</div>
+                  <div className="font-medium">support@requesta.com</div>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3 p-3 border rounded-lg">
+                <div className="p-2 bg-requesta-primary/10 rounded-full">
+                  <Phone className="h-5 w-5 text-requesta-primary" />
+                </div>
+                <div>
+                  <div className="text-sm text-gray-500">Phone Support</div>
+                  <div className="font-medium">+265 1 234 5678</div>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3 p-3 border rounded-lg">
+                <div className="p-2 bg-requesta-primary/10 rounded-full">
+                  <HelpCircle className="h-5 w-5 text-requesta-primary" />
+                </div>
+                <div>
+                  <div className="text-sm text-gray-500">Support Hours</div>
+                  <div className="font-medium">Mon-Fri: 8AM - 5PM</div>
+                  <div className="text-xs text-gray-500">Sat: 9AM - 1PM</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Emergency Contact */}
+          <Card className="border-requesta-accent/20 bg-requesta-accent/5">
+            <CardHeader>
+              <CardTitle className="text-requesta-accent">Urgent Issues</CardTitle>
+              <CardDescription className="text-requesta-accent/80">
+                For critical system issues during non-business hours
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="font-medium text-requesta-accent">Emergency IT Support</div>
+                <div className="text-sm">+265 88 123 4567</div>
+                <div className="text-xs text-gray-600">Available 24/7 for critical issues only</div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Knowledge Base */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Popular Articles</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button variant="link" className="justify-start p-0 h-auto text-left">
+                How to submit a loan application
+              </Button>
+              <Button variant="link" className="justify-start p-0 h-auto text-left">
+                Travel request approval process
+              </Button>
+              <Button variant="link" className="justify-start p-0 h-auto text-left">
+                Updating employee information
+              </Button>
+              <Button variant="link" className="justify-start p-0 h-auto text-left">
+                System password reset guide
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  )
+} -->
