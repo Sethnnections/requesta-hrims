@@ -45,7 +45,8 @@ import { RolesService } from './services/roles.service';
         return {
           secret: secret,
           signOptions: {
-            expiresIn: expiresIn ? `${expiresIn}s` : '8h', // Format as string with 's'
+            // Convert seconds to hours if needed, or use as-is
+            expiresIn: expiresIn ? `${expiresIn / 3600}h` : '8h',
           },
         };
       },

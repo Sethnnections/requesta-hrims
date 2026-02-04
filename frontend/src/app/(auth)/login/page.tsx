@@ -1,60 +1,67 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { Eye, EyeOff, Mail, Lock } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { useAuth } from '@/hooks/auth/use-auth'
-import { useAuthStore } from '@/store/slices/auth-slice' // Add this import
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useAuth } from '@/hooks/auth/use-auth';
+import { useAuthStore } from '@/store/slices/auth-slice';
+import Image from 'next/image';
 
 export default function LoginPage() {
-  const router = useRouter()
-  const { login, isLoading } = useAuth()
-  const { user, isAuthenticated } = useAuthStore() // Get auth state
-  const [showPassword, setShowPassword] = useState(false)
+  const router = useRouter();
+  const { login, isLoading } = useAuth();
+  const { user, isAuthenticated } = useAuthStore(); // Get auth state
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     identifier: 'ceo@sethnnections.mw', // Pre-fill for testing
     password: 'CEO123!', // Pre-fill for testing
-  })
-  const [error, setError] = useState('')
+  });
+  const [error, setError] = useState('');
 
   // Debug: Check current auth state
-  console.log('Login Page - Auth State:', { 
-    user, 
+  console.log('Login Page - Auth State:', {
+    user,
     isAuthenticated,
-    isLoading 
-  })
+    isLoading,
+  });
 
- // app/(auth)/login/page.tsx - Updated handleSubmit
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault()
-  setError('')
-  
-  console.log('Login attempt with:', {
-    identifier: formData.identifier,
-    password: formData.password
-  })
+  // app/(auth)/login/page.tsx - Updated handleSubmit
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
 
-try {
-  const result = await login(formData.identifier, formData.password)
-  console.log('Login successful! Response:', result)
-  
-  // Wait for state to update
-  await new Promise(resolve => setTimeout(resolve, 200))
-  
-  // Force hard redirect to dashboard
-  window.location.href = '/dashboard'
-  
-} catch (err: any) {
-  console.error('Login error:', err)
-  setError(err.message || 'Invalid credentials. Please try again.')
-}
-}
+    console.log('Login attempt with:', {
+      identifier: formData.identifier,
+      password: formData.password,
+    });
+
+    try {
+      const result = await login(formData.identifier, formData.password);
+      console.log('Login successful! Response:', result);
+
+      // Wait for state to update
+      await new Promise((resolve) => setTimeout(resolve, 200));
+
+      // Force hard redirect to dashboard
+      window.location.href = '/dashboard';
+    } catch (err: any) {
+      console.error('Login error:', err);
+      setError(err.message || 'Invalid credentials. Please try again.');
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-requesta-background to-white p-4">
@@ -62,18 +69,23 @@ try {
         <CardHeader className="space-y-1">
           <div className="flex justify-center mb-4">
             {/* Fixed logo */}
-            <div className="w-16 h-16 bg-requesta-primary rounded-full flex items-center justify-center">
-              <span className="text-2xl font-bold text-white">R</span>
+              <div className="h-240 w-full flex items-center justify-center">
+                <Image
+                  src="/images/logo2.png"
+                  alt="Requesta Logo"
+                  width={280}
+                  height={240}
+                  className="object-contain max-h-140"
+                  priority
+                />
             </div>
           </div>
-          <CardTitle className="text-2xl text-center text-requesta-primary">
-            Requesta HRIMS
-          </CardTitle>
+          <CardTitle className="text-center text-2xl font-bold">Welcome Back</CardTitle>
           <CardDescription className="text-center">
-            Human Resource Information Management System
+            Travel request and Loan applications Simplified
           </CardDescription>
         </CardHeader>
-        
+
         <CardContent>
           {error && (
             <Alert variant="destructive" className="mb-6">
@@ -94,7 +106,7 @@ try {
                   placeholder="ceo@sethnnections.mw"
                   className="pl-10"
                   value={formData.identifier}
-                  onChange={(e) => setFormData({...formData, identifier: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, identifier: e.target.value })}
                   required
                 />
               </div>
@@ -120,7 +132,7 @@ try {
                   placeholder="••••••••"
                   className="pl-10 pr-10"
                   value={formData.password}
-                  onChange={(e) => setFormData({...formData, password: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   required
                 />
                 <button
@@ -158,7 +170,7 @@ try {
               <p>Password: CEO123!</p>
             </div>
           </div>
-          
+
           <div className="text-center text-sm">
             <span className="text-gray-600">Need help? </span>
             <Link
@@ -171,5 +183,5 @@ try {
         </CardFooter>
       </Card>
     </div>
-  )
+  );
 }
