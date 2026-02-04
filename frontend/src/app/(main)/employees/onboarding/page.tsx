@@ -106,8 +106,13 @@ export default function EmployeeOnboardingPage() {
 
   const handleDepartmentChange = async (departmentId: string) => {
     setValue('departmentId', departmentId)
+    setValue('positionId', '') 
+    
     try {
-      await fetchPositions({ departmentId })
+      await fetchPositions({ 
+        departmentId,
+        hasVacancies: true // Ensure we only get available positions
+      })
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -115,7 +120,7 @@ export default function EmployeeOnboardingPage() {
         variant: 'error',
       })
     }
-  }
+}
 
   const onSubmit = async (data: EmployeeFormData) => {
     try {
@@ -350,28 +355,40 @@ export default function EmployeeOnboardingPage() {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="positionId">Position *</Label>
-                    <Select 
-                      onValueChange={(value) => setValue('positionId', value)}
-                      disabled={!departmentId || isLoading}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select position" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {positions
-                          .filter(pos => pos.availablePositions > 0)
-                          .map((pos) => (
-                            <SelectItem key={pos._id} value={pos._id}>
-                              {pos.positionTitle} ({pos.availablePositions} available)
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                    {errors.positionId && (
-                      <p className="text-sm text-red-500">{errors.positionId.message}</p>
-                    )}
-                  </div>
+                  <Label htmlFor="positionId">Position *</Label>
+                  <Select 
+                    onValueChange={(value) => setValue('positionId', value)}
+                    disabled={!departmentId || isLoading}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={
+                        !departmentId 
+                          ? "Select department first"
+                          : positions.filter(pos => pos.availablePositions > 0).length === 0
+                          ? "No available positions"
+                          : "Select position"
+                      } />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {positions
+                        .filter(pos => pos.availablePositions > 0)
+                        .map((pos) => (
+                          <SelectItem key={pos._id} value={pos._id}>
+                            {pos.positionTitle} ({pos.availablePositions} available)
+                          </SelectItem>
+                        ))}
+                      
+                      {positions.filter(pos => pos.availablePositions > 0).length === 0 && (
+                        <div className="px-2 py-3 text-sm text-gray-500 text-center">
+                          No available positions in this department
+                        </div>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {errors.positionId && (
+                    <p className="text-sm text-red-500">{errors.positionId.message}</p>
+                  )}
+                </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

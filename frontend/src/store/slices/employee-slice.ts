@@ -267,16 +267,29 @@ export const useEmployeeStore = create<EmployeeState>((set, get) => ({
   },
   
   fetchPositions: async (params = {}) => {
-    set({ isLoading: true, error: null })
+  set({ isLoading: true, error: null })
+  
+  try {
+    // Always filter for active positions with vacancies by default
+    const response = await employeeService.getPositions({
+      ...params,
+      isActive: true,
+      hasVacancies: true, 
+    })
     
-    try {
-      const response = await employeeService.getPositions(params)
-      set({ positions: response.data, isLoading: false })
-    } catch (error: any) {
-      set({ error: error.message, isLoading: false })
-      throw error
-    }
-  },
+    set({ 
+      positions: response.data, 
+      isLoading: false 
+    })
+  } catch (error: any) {
+    set({ 
+      error: error.message, 
+      isLoading: false,
+      positions: [] // Reset positions on error
+    })
+    throw error
+  }
+},
   
   fetchGrades: async (params = {}) => {
     set({ isLoading: true, error: null })

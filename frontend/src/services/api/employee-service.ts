@@ -274,38 +274,39 @@ export class EmployeeService {
   }
 
   // Position endpoints
-  async getPositions(params?: {
-    page?: number
-    limit?: number
-    departmentId?: string
-    gradeId?: string
-    isActive?: boolean
-    hasVacancies?: boolean
-  }): Promise<PaginatedResponse<Position>> {
-    const token = localStorage.getItem('accessToken')
-    const queryParams = new URLSearchParams()
-    
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          queryParams.append(key, value.toString())
-        }
-      })
-    }
-
-    const response = await fetch(`${this.baseUrl}/positions?${queryParams}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
+async getPositions(params?: {
+  page?: number
+  limit?: number
+  departmentId?: string
+  gradeId?: string
+  isActive?: boolean
+  hasVacancies?: boolean
+}): Promise<PaginatedResponse<Position>> {
+  const token = localStorage.getItem('accessToken')
+  const queryParams = new URLSearchParams()
+  
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        queryParams.append(key, value.toString())
+      }
     })
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch positions')
-    }
-
-    return response.json()
   }
+
+  const response = await fetch(`${this.baseUrl}/positions?${queryParams}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.message || 'Failed to fetch positions')
+  }
+
+  return response.json()
+}
 
   // Grade endpoints
   async getGrades(params?: {
