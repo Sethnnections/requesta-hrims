@@ -34,14 +34,20 @@ export default function CreateDepartmentPage() {
   const [positions, setPositions] = useState<Position[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
+  // Add watch to useForm
   const {
     register,
     handleSubmit,
     setValue,
+    watch, // <-- Add this
     formState: { errors },
   } = useForm<DepartmentFormData>({
     resolver: zodResolver(departmentSchema),
   })
+
+  // Watch the form values
+  const parentDepartmentId = watch('parentDepartmentId')
+  const departmentHeadPositionId = watch('departmentHeadPositionId')
 
   useEffect(() => {
     loadData()
@@ -57,8 +63,8 @@ export default function CreateDepartmentPage() {
         }),
         organizationService.getPositions({ 
           isActive: true,
-          limit: 100,
-          includeRelations: true 
+          limit: 100
+          // Remove includeRelations for now
         })
       ])
       
@@ -78,7 +84,15 @@ export default function CreateDepartmentPage() {
   const onSubmit = async (data: DepartmentFormData) => {
     try {
       setIsSubmitting(true)
-      await organizationService.createDepartment(data)
+      
+      // Handle "none" values
+      const departmentData = {
+        ...data,
+        parentDepartmentId: data.parentDepartmentId === "none" ? undefined : data.parentDepartmentId,
+        departmentHeadPositionId: data.departmentHeadPositionId === "none" ? undefined : data.departmentHeadPositionId,
+      }
+
+      await organizationService.createDepartment(departmentData)
 
       toast({
         title: 'Success',
@@ -171,12 +185,17 @@ export default function CreateDepartmentPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="parentDepartmentId">Parent Department</Label>
-                <Select onValueChange={(value) => setValue('parentDepartmentId', value)}>
+                <Select 
+                  onValueChange={(value) => {
+                    setValue('parentDepartmentId', value === "none" ? undefined : value)
+                  }}
+                  value={parentDepartmentId || "none"}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select parent department" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None (Top-level)</SelectItem>
+                    <SelectItem value="none">None (Top-level)</SelectItem>
                     {departments.map((dept) => (
                       <SelectItem key={dept._id} value={dept._id}>
                         {dept.departmentName} ({dept.departmentCode})
@@ -188,12 +207,17 @@ export default function CreateDepartmentPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="departmentHeadPositionId">Department Head Position</Label>
-                <Select onValueChange={(value) => setValue('departmentHeadPositionId', value)}>
+                <Select 
+                  onValueChange={(value) => {
+                    setValue('departmentHeadPositionId', value === "none" ? undefined : value)
+                  }}
+                  value={departmentHeadPositionId || "none"}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select department head" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {positions
                       .filter(pos => pos.isManagerRole || pos.isDirectorRole)
                       .map((pos) => (

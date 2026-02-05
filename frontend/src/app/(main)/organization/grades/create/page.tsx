@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, Save } from 'lucide-react'
 import { Grade } from '@/types/organization'
 import { organizationService } from '@/services/api/organization-service'
+import { watch } from 'fs'
 
 const gradeSchema = z.object({
   name: z.string().min(2, 'Grade name is required'),
@@ -52,36 +53,37 @@ export default function CreateGradePage() {
   const [grades, setGrades] = useState<Grade[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
-  const {
+    const {
     register,
     handleSubmit,
     setValue,
+    watch, // <-- Add this
     formState: { errors },
-  } = useForm<GradeFormData>({
+    } = useForm<GradeFormData>({
     resolver: zodResolver(gradeSchema),
     defaultValues: {
-      level: 1,
-      band: 'JUNIOR',
-      compensation: {
+        level: 1,
+        band: 'JUNIOR',
+        compensation: {
         basicSalary: {
-          min: 0,
-          mid: 0,
-          max: 0,
+            min: 0,
+            mid: 0,
+            max: 0,
         },
         houseAllowance: 0,
         carAllowance: 0,
         travelAllowance: 0,
         overtimeRate: 1.0,
-      },
-      limits: {
+        },
+        limits: {
         maxLoanAmount: 0,
         requiresManagerApproval: true,
         requiresDirectorApproval: false,
         maxApprovalLevel: 'M11',
-      },
-      isActive: true,
+        },
+        isActive: true,
     },
-  })
+    })
 
   useEffect(() => {
     loadGrades()
@@ -158,6 +160,8 @@ export default function CreateGradePage() {
     )
   }
 
+   z
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -225,23 +229,26 @@ export default function CreateGradePage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="band">Band *</Label>
-                  <Select onValueChange={(value: any) => setValue('band', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select band" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="JUNIOR">Junior</SelectItem>
-                      <SelectItem value="OPERATIONAL">Operational</SelectItem>
-                      <SelectItem value="SUPERVISORY">Supervisory</SelectItem>
-                      <SelectItem value="MANAGERIAL">Managerial</SelectItem>
-                      <SelectItem value="EXECUTIVE">Executive</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {errors.band && (
-                    <p className="text-sm text-red-500">{errors.band.message}</p>
-                  )}
-                </div>
+                    <Label htmlFor="band">Band *</Label>
+                    <Select 
+                        onValueChange={(value: any) => setValue('band', value)}
+                        value={watch('band')}
+                    >
+                        <SelectTrigger>
+                        <SelectValue placeholder="Select band" />
+                        </SelectTrigger>
+                        <SelectContent>
+                        <SelectItem value="JUNIOR">Junior</SelectItem>
+                        <SelectItem value="OPERATIONAL">Operational</SelectItem>
+                        <SelectItem value="SUPERVISORY">Supervisory</SelectItem>
+                        <SelectItem value="MANAGERIAL">Managerial</SelectItem>
+                        <SelectItem value="EXECUTIVE">Executive</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    {errors.band && (
+                        <p className="text-sm text-red-500">{errors.band.message}</p>
+                    )}
+                    </div>
 
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="description">Description *</Label>
@@ -257,20 +264,23 @@ export default function CreateGradePage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="nextGrade">Next Grade (Progression)</Label>
-                  <Select onValueChange={(value) => setValue('nextGrade', value)}>
+                <Label htmlFor="nextGrade">Next Grade (Progression)</Label>
+                <Select 
+                    onValueChange={(value) => setValue('nextGrade', value)}
+                    value={watch('nextGrade')}
+                >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select next grade" />
+                    <SelectValue placeholder="Select next grade" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
-                      {grades.map((grade) => (
+                    <SelectItem value="">None</SelectItem>
+                    {grades.map((grade) => (
                         <SelectItem key={grade._id} value={grade._id}>
-                          {grade.name} ({grade.code})
+                        {grade.name} ({grade.code})
                         </SelectItem>
-                      ))}
+                    ))}
                     </SelectContent>
-                  </Select>
+                </Select>
                 </div>
               </div>
             </CardContent>

@@ -148,7 +148,7 @@ export const organizationService = {
     })
   },
 
-  // Positions
+  // Positions - SIMPLIFIED VERSION (remove problematic params)
   getPositions: async (params?: {
     page?: number
     limit?: number
@@ -156,8 +156,6 @@ export const organizationService = {
     isActive?: boolean
     departmentId?: string
     gradeId?: string
-    hasAvailability?: boolean
-    includeRelations?: boolean
   }): Promise<PaginatedResponse<Position>> => {
     const queryParams = new URLSearchParams()
     if (params?.page) queryParams.append('page', params.page.toString())
@@ -166,9 +164,8 @@ export const organizationService = {
     if (params?.isActive !== undefined) queryParams.append('isActive', params.isActive.toString())
     if (params?.departmentId) queryParams.append('departmentId', params.departmentId)
     if (params?.gradeId) queryParams.append('gradeId', params.gradeId)
-    if (params?.hasAvailability !== undefined) queryParams.append('hasAvailability', params.hasAvailability.toString())
-    if (params?.includeRelations) queryParams.append('includeRelations', 'true')
     
+    console.log('Fetching positions with query:', queryParams.toString())
     return fetchWithAuth(`/positions?${queryParams.toString()}`)
   },
 
@@ -213,24 +210,4 @@ export const organizationService = {
   getPositionHierarchy: async (): Promise<Position[]> => {
     return fetchWithAuth('/positions/hierarchy')
   },
-
-  // Simple fetch for now - you can expand this later
-  getOrganizationStatistics: async (): Promise<any> => {
-    try {
-      // For now, let's fetch basic stats or return defaults
-      return {
-        totalDepartments: 12,
-        totalEmployees: 288,
-        totalPositions: 53,
-        totalGrades: 13
-      }
-    } catch {
-      return {
-        totalDepartments: 0,
-        totalEmployees: 0,
-        totalPositions: 0,
-        totalGrades: 0
-      }
-    }
-  }
 }

@@ -1,21 +1,27 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { useToast } from '@/components/ui/use-toast'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Switch } from '@/components/ui/switch'
-import { ArrowLeft, Save } from 'lucide-react'
-import { Department, Grade, Position } from '@/types/organization'
-import { organizationService } from '@/services/api/organization-service'
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useToast } from '@/components/ui/use-toast';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { ArrowLeft, Save } from 'lucide-react';
+import { Department, Grade, Position } from '@/types/organization';
+import { organizationService } from '@/services/api/organization-service';
 
 const positionSchema = z.object({
   positionTitle: z.string().min(2, 'Position title is required'),
@@ -30,20 +36,20 @@ const positionSchema = z.object({
   isManagerRole: z.boolean().default(false),
   isDirectorRole: z.boolean().default(false),
   numberOfPositions: z.number().min(1, 'At least 1 position is required'),
-})
+});
 
-type PositionFormData = z.infer<typeof positionSchema>
+type PositionFormData = z.infer<typeof positionSchema>;
 
 export default function CreatePositionPage() {
-  const router = useRouter()
-  const { toast } = useToast()
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [departments, setDepartments] = useState<Department[]>([])
-  const [grades, setGrades] = useState<Grade[]>([])
-  const [positions, setPositions] = useState<Position[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [responsibilities, setResponsibilities] = useState<string[]>([])
-  const [newResponsibility, setNewResponsibility] = useState('')
+  const router = useRouter();
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [grades, setGrades] = useState<Grade[]>([]);
+  const [positions, setPositions] = useState<Position[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [responsibilities, setResponsibilities] = useState<string[]>([]);
+  const [newResponsibility, setNewResponsibility] = useState('');
 
   const {
     register,
@@ -57,105 +63,106 @@ export default function CreatePositionPage() {
       numberOfPositions: 1,
       responsibilities: [],
     },
-  })
+  });
 
-  const departmentId = watch('departmentId')
+  const departmentId = watch('departmentId');
 
   useEffect(() => {
-    loadData()
-  }, [])
+    loadData();
+  }, []);
 
   useEffect(() => {
     if (departmentId) {
-      loadDepartmentPositions(departmentId)
+      loadDepartmentPositions(departmentId);
     }
-  }, [departmentId])
+  }, [departmentId]);
 
   const loadData = async () => {
     try {
-      setIsLoading(true)
+      setIsLoading(true);
       const [deptsData, gradesData] = await Promise.all([
-        organizationService.getDepartments({ 
+        organizationService.getDepartments({
           isActive: true,
-          limit: 100 
+          limit: 100,
         }),
-        organizationService.getGrades({ 
+        organizationService.getGrades({
           isActive: true,
-          limit: 100 
-        })
-      ])
-      
-      setDepartments(deptsData.data)
-      setGrades(gradesData.data)
+          limit: 100,
+        }),
+      ]);
+
+      setDepartments(deptsData.data);
+      setGrades(gradesData.data);
     } catch (error: any) {
       toast({
         title: 'Error',
         description: 'Failed to load data',
         variant: 'error',
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
-  const loadDepartmentPositions = async (deptId: string) => {
-    try {
-      const data = await organizationService.getPositions({ 
-        departmentId: deptId,
-        isActive: true,
-        limit: 100,
-        includeRelations: true
-      })
-      setPositions(data.data)
-    } catch (error: any) {
-      console.error('Failed to load positions:', error)
-    }
+const loadDepartmentPositions = async (deptId: string) => {
+  try {
+    const data = await organizationService.getPositions({ 
+      departmentId: deptId,
+      isActive: true,
+      limit: 100,
+      // Remove includeRelations for now
+    })
+    setPositions(data.data)
+  } catch (error: any) {
+    console.error('Failed to load positions:', error)
+    // Don't show toast here as it's optional
   }
+}
 
   const addResponsibility = () => {
     if (newResponsibility.trim()) {
-      setResponsibilities([...responsibilities, newResponsibility.trim()])
-      setValue('responsibilities', [...responsibilities, newResponsibility.trim()])
-      setNewResponsibility('')
+      setResponsibilities([...responsibilities, newResponsibility.trim()]);
+      setValue('responsibilities', [...responsibilities, newResponsibility.trim()]);
+      setNewResponsibility('');
     }
-  }
+  };
 
   const removeResponsibility = (index: number) => {
-    const updated = [...responsibilities]
-    updated.splice(index, 1)
-    setResponsibilities(updated)
-    setValue('responsibilities', updated)
-  }
+    const updated = [...responsibilities];
+    updated.splice(index, 1);
+    setResponsibilities(updated);
+    setValue('responsibilities', updated);
+  };
 
   const onSubmit = async (data: PositionFormData) => {
     try {
-      setIsSubmitting(true)
-      
+      setIsSubmitting(true);
+
       const positionData = {
         ...data,
         responsibilities: responsibilities,
         reportsToPositionId: data.reportsToPositionId || undefined,
         jobDescription: data.jobDescription || undefined,
-      }
+      };
 
-      await organizationService.createPosition(positionData)
+      await organizationService.createPosition(positionData);
 
       toast({
         title: 'Success',
         description: 'Position created successfully',
-      })
+      });
 
-      router.push('/organization/positions')
+      router.push('/organization/positions');
     } catch (error: any) {
       toast({
         title: 'Error',
         description: error.message,
         variant: 'error',
-      })
+      });
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   if (isLoading) {
     return (
@@ -165,17 +172,13 @@ export default function CreatePositionPage() {
           <p className="mt-4 text-muted-foreground">Loading data...</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          onClick={() => router.back()}
-          className="text-muted-foreground"
-        >
+        <Button variant="ghost" onClick={() => router.back()} className="text-muted-foreground">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back
         </Button>
@@ -191,9 +194,7 @@ export default function CreatePositionPage() {
           <Card className="lg:col-span-2">
             <CardHeader>
               <CardTitle>Position Details</CardTitle>
-              <CardDescription>
-                Enter the details for the new position
-              </CardDescription>
+              <CardDescription>Enter the details for the new position</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid gap-4 md:grid-cols-2">
@@ -208,7 +209,6 @@ export default function CreatePositionPage() {
                     <p className="text-sm text-red-500">{errors.positionTitle.message}</p>
                   )}
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="positionCode">Position Code *</Label>
                   <Input
@@ -220,10 +220,12 @@ export default function CreatePositionPage() {
                     <p className="text-sm text-red-500">{errors.positionCode.message}</p>
                   )}
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="departmentId">Department *</Label>
-                  <Select onValueChange={(value) => setValue('departmentId', value)}>
+                  <Select
+                    onValueChange={(value) => setValue('departmentId', value)}
+                    value={departmentId}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select department" />
                     </SelectTrigger>
@@ -239,10 +241,13 @@ export default function CreatePositionPage() {
                     <p className="text-sm text-red-500">{errors.departmentId.message}</p>
                   )}
                 </div>
-
+                // Fix the grade Select:
                 <div className="space-y-2">
                   <Label htmlFor="gradeId">Grade *</Label>
-                  <Select onValueChange={(value) => setValue('gradeId', value)}>
+                  <Select
+                    onValueChange={(value) => setValue('gradeId', value)}
+                    value={watch('gradeId')}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select grade" />
                     </SelectTrigger>
@@ -258,24 +263,7 @@ export default function CreatePositionPage() {
                     <p className="text-sm text-red-500">{errors.gradeId.message}</p>
                   )}
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="reportsToPositionId">Reports To Position</Label>
-                  <Select onValueChange={(value) => setValue('reportsToPositionId', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select reporting position" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">None (Top-level)</SelectItem>
-                      {positions.map((pos) => (
-                        <SelectItem key={pos._id} value={pos._id}>
-                          {pos.positionTitle} ({pos.positionCode})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
+                
                 <div className="space-y-2">
                   <Label htmlFor="numberOfPositions">Number of Positions *</Label>
                   <Input
@@ -288,7 +276,6 @@ export default function CreatePositionPage() {
                     <p className="text-sm text-red-500">{errors.numberOfPositions.message}</p>
                   )}
                 </div>
-
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="jobDescription">Job Description</Label>
                   <Textarea
@@ -298,7 +285,6 @@ export default function CreatePositionPage() {
                     rows={4}
                   />
                 </div>
-
                 <div className="space-y-2 md:col-span-2">
                   <Label>Responsibilities</Label>
                   <div className="space-y-2">
@@ -307,7 +293,9 @@ export default function CreatePositionPage() {
                         placeholder="Add a responsibility..."
                         value={newResponsibility}
                         onChange={(e) => setNewResponsibility(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addResponsibility())}
+                        onKeyDown={(e) =>
+                          e.key === 'Enter' && (e.preventDefault(), addResponsibility())
+                        }
                       />
                       <Button type="button" onClick={addResponsibility}>
                         Add
@@ -315,7 +303,10 @@ export default function CreatePositionPage() {
                     </div>
                     <div className="space-y-2">
                       {responsibilities.map((resp, index) => (
-                        <div key={index} className="flex items-center justify-between p-2 bg-muted rounded">
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-2 bg-muted rounded"
+                        >
                           <span>{resp}</span>
                           <Button
                             type="button"
@@ -328,7 +319,9 @@ export default function CreatePositionPage() {
                         </div>
                       ))}
                       {responsibilities.length === 0 && (
-                        <p className="text-sm text-muted-foreground">No responsibilities added yet</p>
+                        <p className="text-sm text-muted-foreground">
+                          No responsibilities added yet
+                        </p>
                       )}
                     </div>
                   </div>
@@ -341,9 +334,7 @@ export default function CreatePositionPage() {
           <Card>
             <CardHeader>
               <CardTitle>Role Settings</CardTitle>
-              <CardDescription>
-                Configure the position's role type
-              </CardDescription>
+              <CardDescription>Configure the position's role type</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-4">
@@ -354,9 +345,7 @@ export default function CreatePositionPage() {
                       This position heads the department
                     </p>
                   </div>
-                  <Switch
-                    onCheckedChange={(checked) => setValue('isHeadOfDepartment', checked)}
-                  />
+                  <Switch onCheckedChange={(checked) => setValue('isHeadOfDepartment', checked)} />
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -366,9 +355,7 @@ export default function CreatePositionPage() {
                       This position supervises other employees
                     </p>
                   </div>
-                  <Switch
-                    onCheckedChange={(checked) => setValue('isSupervisorRole', checked)}
-                  />
+                  <Switch onCheckedChange={(checked) => setValue('isSupervisorRole', checked)} />
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -378,9 +365,7 @@ export default function CreatePositionPage() {
                       This position has managerial responsibilities
                     </p>
                   </div>
-                  <Switch
-                    onCheckedChange={(checked) => setValue('isManagerRole', checked)}
-                  />
+                  <Switch onCheckedChange={(checked) => setValue('isManagerRole', checked)} />
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -390,19 +375,13 @@ export default function CreatePositionPage() {
                       This is an executive director position
                     </p>
                   </div>
-                  <Switch
-                    onCheckedChange={(checked) => setValue('isDirectorRole', checked)}
-                  />
+                  <Switch onCheckedChange={(checked) => setValue('isDirectorRole', checked)} />
                 </div>
               </div>
 
               <div className="pt-4 border-t">
                 <div className="flex justify-end gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => router.back()}
-                  >
+                  <Button type="button" variant="outline" onClick={() => router.back()}>
                     Cancel
                   </Button>
                   <Button type="submit" disabled={isSubmitting}>
@@ -416,5 +395,5 @@ export default function CreatePositionPage() {
         </div>
       </form>
     </div>
-  )
+  );
 }

@@ -189,34 +189,38 @@ export default function PositionsPage() {
     totalPages: 0,
   })
 
-  const fetchPositions = async (page = 1) => {
-    try {
-      setIsLoading(true)
-      const data = await organizationService.getPositions({
-        page,
-        limit: pagination.limit,
-        search,
-        hasAvailability: true,
-        includeRelations: true, // This will populate department and grade
-      })
-      
-      setPositions(data.data)
-      setPagination({
-        page: data.page,
-        limit: data.limit,
-        total: data.total,
-        totalPages: data.totalPages,
-      })
-    } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'error',
-      })
-    } finally {
-      setIsLoading(false)
-    }
+ const fetchPositions = async (page = 1) => {
+  try {
+    setIsLoading(true)
+    const data = await organizationService.getPositions({
+      page,
+      limit: pagination.limit,
+      search,
+      // Remove problematic params for now
+      // hasAvailability: true,
+      // includeRelations: true,
+    })
+    
+    setPositions(data.data)
+    setPagination({
+      page: data.page,
+      limit: data.limit,
+      total: data.total,
+      totalPages: data.totalPages,
+    })
+  } catch (error: any) {
+    console.error('Failed to fetch positions:', error)
+    toast({
+      title: 'Error',
+      description: error.message || 'Failed to load positions',
+      variant: 'error',
+    })
+    // Set empty array on error
+    setPositions([])
+  } finally {
+    setIsLoading(false)
   }
+}
 
   useEffect(() => {
     fetchPositions()
