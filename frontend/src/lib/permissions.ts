@@ -47,6 +47,18 @@ export const PERMISSIONS = {
   REPORTS_GENERATE: 'reports:generate',
   AUDIT_LOGS_VIEW: 'audit_logs:view',
   SETTINGS_MANAGE: 'settings:manage',
+  DEPARTMENT_VIEW: 'department:view',
+  POSITION_VIEW: 'position:view',
+  POSITION_MANAGE: 'position:manage',
+  GRADE_VIEW: 'grade:view',
+  GRADE_MANAGE: 'grade:manage',
+  
+  // Employee Permissions
+  EMPLOYEES_VIEW: 'employees:view',
+  EMPLOYEES_MANAGE_DEPARTMENT: 'employees:manage_department',
+  
+  // System Permissions
+
 } as const
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS]

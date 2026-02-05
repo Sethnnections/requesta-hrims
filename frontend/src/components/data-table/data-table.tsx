@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   ChevronLeft,
   ChevronRight,
@@ -32,11 +33,21 @@ import {
   Filter,
 } from 'lucide-react'
 
+interface Pagination {
+  page: number
+  limit: number
+  total: number
+  totalPages: number
+}
+
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
   searchKey?: string
   exportable?: boolean
+  isLoading?: boolean
+  pagination?: Pagination
+  onPageChange?: (page: number) => void
 }
 
 export function DataTable<TData, TValue>({
@@ -44,6 +55,9 @@ export function DataTable<TData, TValue>({
   data,
   searchKey,
   exportable = false,
+  isLoading = false,
+  pagination,
+  onPageChange,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -65,6 +79,46 @@ export function DataTable<TData, TValue>({
       globalFilter,
     },
   })
+
+  // Handle external pagination
+  const handleExternalPageChange = (newPageIndex: number) => {
+    if (pagination && onPageChange) {
+      onPageChange(newPageIndex + 1)
+    } else {
+      table.setPageIndex(newPageIndex)
+    }
+  }
+
+  const currentPage = pagination ? pagination.page : table.getState().pagination.pageIndex + 1
+  const totalPages = pagination ? pagination.totalPages : table.getPageCount()
+  const canPreviousPage = pagination ? currentPage > 1 : table.getCanPreviousPage()
+  const canNextPage = pagination ? currentPage < totalPages : table.getCanNextPage()
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-10 w-[300px]" />
+          {exportable && <Skeleton className="h-10 w-24" />}
+        </div>
+        <div className="rounded-md border">
+          <div className="space-y-2 p-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-12 w-full" />
+            ))}
+          </div>
+        </div>
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-8 w-32" />
+          <div className="flex space-x-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-8 w-8" />
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-4">
@@ -152,15 +206,19 @@ export function DataTable<TData, TValue>({
       {/* Pagination */}
       <div className="flex items-center justify-between px-2">
         <div className="text-sm text-gray-600">
-          Page {table.getState().pagination.pageIndex + 1} of{' '}
-          {table.getPageCount()}
+          Page {currentPage} of {totalPages}
+          {pagination && (
+            <span className="ml-2 text-gray-500">
+              ({pagination.total} total items)
+            </span>
+          )}
         </div>
         <div className="flex items-center space-x-2">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => table.setPageIndex(0)}
-            disabled={!table.getCanPreviousPage()}
+            onClick={() => handleExternalPageChange(0)}
+            disabled={!canPreviousPage}
             className="border-requesta-primary/30"
           >
             <ChevronsLeft className="h-4 w-4" />
@@ -168,8 +226,8 @@ export function DataTable<TData, TValue>({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
+            onClick={() => handleExternalPageChange(currentPage - 2)}
+            disabled={!canPreviousPage}
             className="border-requesta-primary/30"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -177,8 +235,8 @@ export function DataTable<TData, TValue>({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
+            onClick={() => handleExternalPageChange(currentPage)}
+            disabled={!canNextPage}
             className="border-requesta-primary/30"
           >
             <ChevronRight className="h-4 w-4" />
@@ -186,8 +244,8 @@ export function DataTable<TData, TValue>({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-            disabled={!table.getCanNextPage()}
+            onClick={() => handleExternalPageChange(totalPages - 1)}
+            disabled={!canNextPage}
             className="border-requesta-primary/30"
           >
             <ChevronsRight className="h-4 w-4" />

@@ -7,9 +7,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { DataTable } from '@/components/data-table/data-table'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Search, Filter, Building, Users, MoreVertical, Eye, Edit, Trash } from 'lucide-react'
+import { DataTable } from '@/components/data-table/data-table'
+import { Plus, Search, Filter, Building, Users, MoreVertical, Eye, Edit, Trash, CheckCircle, XCircle } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,9 +18,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Department, PaginatedResponse } from '@/types/organization/department'
+import { ColumnDef } from '@tanstack/react-table'
+import { Department, PaginatedResponse } from '@/types/organization'
+import { organizationService } from '@/services/api/organization-service'
 
-const columns = [
+// Define columns with proper typing
+const columns: ColumnDef<Department>[] = [
   {
     accessorKey: 'departmentCode',
     header: 'Code',
@@ -32,35 +35,44 @@ const columns = [
   {
     accessorKey: 'description',
     header: 'Description',
-    cell: ({ row }: any) => (
-      <div className="max-w-xs truncate">{row.getValue('description') || '-'}</div>
+    cell: ({ row }) => (
+      <div className="max-w-xs truncate">{row.original.description || '-'}</div>
     ),
   },
   {
     accessorKey: 'isActive',
     header: 'Status',
-    cell: ({ row }: any) => (
-      <Badge variant={row.getValue('isActive') ? 'default' : 'destructive'}>
-        {row.getValue('isActive') ? 'Active' : 'Inactive'}
+    cell: ({ row }) => (
+      <Badge variant={row.original.isActive ? 'default' : 'destructive'} className="flex items-center gap-1">
+        {row.original.isActive ? (
+          <>
+            <CheckCircle className="h-3 w-3" />
+            Active
+          </>
+        ) : (
+          <>
+            <XCircle className="h-3 w-3" />
+            Inactive
+          </>
+        )}
       </Badge>
     ),
   },
   {
     accessorKey: 'employeeCount',
     header: 'Employees',
-    cell: ({ row }: any) => (
+    cell: ({ row }) => (
       <div className="flex items-center gap-1">
         <Users className="h-4 w-4" />
-        <span>{row.getValue('employeeCount') || 0}</span>
+        <span>{row.original.employeeCount || 0}</span>
       </div>
     ),
   },
   {
     id: 'actions',
-    cell: ({ row }: any) => {
+    cell: ({ row }) => {
       const department = row.original
-      const router = useRouter()
-
+      
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -71,25 +83,68 @@ const columns = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => router.push(`/organization/departments/${department._id}`)}>
-              <Eye className="mr-2 h-4 w-4" />
-              View Details
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => router.push(`/organization/departments/${department._id}/edit`)}>
-              <Edit className="mr-2 h-4 w-4" />
-              Edit
-            </DropdownMenuItem>
+            <ViewDetailsMenuItem departmentId={department._id} />
+            <EditMenuItem departmentId={department._id} />
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-red-600">
-              <Trash className="mr-2 h-4 w-4" />
-              Delete
-            </DropdownMenuItem>
+            <DeleteMenuItem departmentId={department._id} departmentName={department.departmentName} />
           </DropdownMenuContent>
         </DropdownMenu>
       )
     },
   },
 ]
+
+// Separate components for menu items
+function ViewDetailsMenuItem({ departmentId }: { departmentId: string }) {
+  const router = useRouter()
+  return (
+    <DropdownMenuItem onClick={() => router.push(`/organization/departments/${departmentId}`)}>
+      <Eye className="mr-2 h-4 w-4" />
+      View Details
+    </DropdownMenuItem>
+  )
+}
+
+function EditMenuItem({ departmentId }: { departmentId: string }) {
+  const router = useRouter()
+  return (
+    <DropdownMenuItem onClick={() => router.push(`/organization/departments/${departmentId}/edit`)}>
+      <Edit className="mr-2 h-4 w-4" />
+      Edit
+    </DropdownMenuItem>
+  )
+}
+
+function DeleteMenuItem({ departmentId, departmentName }: { departmentId: string; departmentName: string }) {
+  const { toast } = useToast()
+  const router = useRouter()
+
+  const handleDelete = async () => {
+    if (!confirm(`Are you sure you want to delete "${departmentName}"?`)) return
+    
+    try {
+      await organizationService.deleteDepartment(departmentId)
+      toast({
+        title: 'Success',
+        description: 'Department deleted successfully',
+      })
+      router.refresh()
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'error',
+      })
+    }
+  }
+
+  return (
+    <DropdownMenuItem className="text-red-600" onClick={handleDelete}>
+      <Trash className="mr-2 h-4 w-4" />
+      Delete
+    </DropdownMenuItem>
+  )
+}
 
 export default function DepartmentsPage() {
   const router = useRouter()
@@ -107,16 +162,15 @@ export default function DepartmentsPage() {
   const fetchDepartments = async (page = 1) => {
     try {
       setIsLoading(true)
-      // TODO: Replace with actual API call
-      const response = await fetch(`/api/v1/departments?page=${page}&limit=${pagination.limit}&search=${search}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-        },
+      const data = await organizationService.getDepartments({
+        page,
+        limit: pagination.limit,
+        search,
+        isActive: true,
+        includeEmployeeCount: true,
+        includeSubDepartments: true,
       })
       
-      if (!response.ok) throw new Error('Failed to fetch departments')
-      
-      const data: PaginatedResponse<Department> = await response.json()
       setDepartments(data.data)
       setPagination({
         page: data.page,
@@ -142,6 +196,9 @@ export default function DepartmentsPage() {
   const handlePageChange = (page: number) => {
     fetchDepartments(page)
   }
+
+  const totalEmployees = departments.reduce((sum, dept) => sum + (dept.employeeCount || 0), 0)
+  const activeDepartments = departments.filter(d => d.isActive).length
 
   return (
     <div className="space-y-6">
@@ -197,6 +254,7 @@ export default function DepartmentsPage() {
                 isLoading={isLoading}
                 pagination={pagination}
                 onPageChange={handlePageChange}
+                exportable={true}
               />
             </CardContent>
           </Card>
@@ -212,7 +270,7 @@ export default function DepartmentsPage() {
           <CardContent>
             <div className="text-2xl font-bold">{pagination.total}</div>
             <p className="text-xs text-muted-foreground">
-              {departments.filter(d => d.isActive).length} active
+              {activeDepartments} active
             </p>
           </CardContent>
         </Card>
@@ -223,9 +281,7 @@ export default function DepartmentsPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {departments.reduce((sum, dept) => sum + (dept.employeeCount || 0), 0)}
-            </div>
+            <div className="text-2xl font-bold">{totalEmployees}</div>
             <p className="text-xs text-muted-foreground">
               Across all departments
             </p>
@@ -238,7 +294,9 @@ export default function DepartmentsPage() {
             <Building className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">3</div>
+            <div className="text-2xl font-bold">
+              {departments.some(d => d.subDepartments && d.subDepartments.length > 0) ? '3+' : '1'}
+            </div>
             <p className="text-xs text-muted-foreground">
               Maximum depth in structure
             </p>

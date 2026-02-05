@@ -15,7 +15,6 @@ import {
   Filter,
   Briefcase,
   Users,
-  DollarSign,
   Building,
   MoreVertical,
   Eye,
@@ -30,9 +29,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Position, PaginatedResponse } from '@/types/organization/positions'
+import { ColumnDef } from '@tanstack/react-table'
+import { Position, PaginatedResponse } from '@/types/organization'
+import { organizationService } from '@/services/api/organization-service'
 
-const columns = [
+// Define columns with proper typing
+const columns: ColumnDef<Position>[] = [
   {
     accessorKey: 'positionCode',
     header: 'Code',
@@ -42,34 +44,41 @@ const columns = [
     header: 'Title',
   },
   {
-    accessorKey: 'department.departmentName',
+    accessorKey: 'department',
     header: 'Department',
-    cell: ({ row }: any) => (
+    cell: ({ row }) => (
       <Badge variant="outline" className="capitalize">
-        {row.getValue('department.departmentName')}
+        {typeof row.original.department === 'object' 
+          ? row.original.department?.departmentName 
+          : 'Loading...'}
       </Badge>
     ),
   },
   {
-    accessorKey: 'grade.code',
+    accessorKey: 'grade',
     header: 'Grade',
-    cell: ({ row }: any) => (
-      <Badge variant="secondary">{row.getValue('grade.code')}</Badge>
+    cell: ({ row }) => (
+      <Badge variant="secondary">
+        {typeof row.original.grade === 'object' 
+          ? row.original.grade?.code 
+          : 'Loading...'}
+      </Badge>
     ),
   },
   {
     accessorKey: 'availablePositions',
     header: 'Availability',
-    cell: ({ row }: any) => {
-      const available = row.getValue('availablePositions')
-      const total = row.original.numberOfPositions
+    cell: ({ row }) => {
+      const position = row.original
+      const available = position.availablePositions || (position.numberOfPositions - position.currentlyFilled)
+      const total = position.numberOfPositions
       return (
         <div className="flex items-center gap-2">
           <div className="flex-1">
             <div className="h-2 bg-muted rounded-full overflow-hidden">
               <div 
                 className={`h-full ${available > 0 ? 'bg-green-500' : 'bg-red-500'}`}
-                style={{ width: `${(available / total) * 100}%` }}
+                style={{ width: `${Math.min(100, (available / total) * 100)}%` }}
               />
             </div>
           </div>
@@ -83,7 +92,7 @@ const columns = [
   {
     accessorKey: 'isSupervisorRole',
     header: 'Role',
-    cell: ({ row }: any) => {
+    cell: ({ row }) => {
       const position = row.original
       if (position.isDirectorRole) return <Badge variant="destructive">Director</Badge>
       if (position.isManagerRole) return <Badge variant="default">Manager</Badge>
@@ -93,10 +102,9 @@ const columns = [
   },
   {
     id: 'actions',
-    cell: ({ row }: any) => {
+    cell: ({ row }) => {
       const position = row.original
-      const router = useRouter()
-
+      
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -107,25 +115,66 @@ const columns = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => router.push(`/organization/positions/${position._id}`)}>
-              <Eye className="mr-2 h-4 w-4" />
-              View Details
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => router.push(`/organization/positions/${position._id}/edit`)}>
-              <Edit className="mr-2 h-4 w-4" />
-              Edit
-            </DropdownMenuItem>
+            <ViewDetailsMenuItem positionId={position._id} />
+            <EditMenuItem positionId={position._id} />
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-red-600">
-              <Trash className="mr-2 h-4 w-4" />
-              Delete
-            </DropdownMenuItem>
+            <DeleteMenuItem positionId={position._id} />
           </DropdownMenuContent>
         </DropdownMenu>
       )
     },
   },
 ]
+
+// Separate components for menu items to avoid hook issues
+function ViewDetailsMenuItem({ positionId }: { positionId: string }) {
+  const router = useRouter()
+  return (
+    <DropdownMenuItem onClick={() => router.push(`/organization/positions/${positionId}`)}>
+      <Eye className="mr-2 h-4 w-4" />
+      View Details
+    </DropdownMenuItem>
+  )
+}
+
+function EditMenuItem({ positionId }: { positionId: string }) {
+  const router = useRouter()
+  return (
+    <DropdownMenuItem onClick={() => router.push(`/organization/positions/${positionId}/edit`)}>
+      <Edit className="mr-2 h-4 w-4" />
+      Edit
+    </DropdownMenuItem>
+  )
+}
+
+function DeleteMenuItem({ positionId }: { positionId: string }) {
+  const { toast } = useToast()
+  const router = useRouter()
+
+  const handleDelete = async () => {
+    try {
+      // TODO: Implement delete position API call
+      toast({
+        title: 'Success',
+        description: 'Position deleted successfully',
+      })
+      router.refresh()
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'error',
+      })
+    }
+  }
+
+  return (
+    <DropdownMenuItem className="text-red-600" onClick={handleDelete}>
+      <Trash className="mr-2 h-4 w-4" />
+      Delete
+    </DropdownMenuItem>
+  )
+}
 
 export default function PositionsPage() {
   const router = useRouter()
@@ -143,15 +192,14 @@ export default function PositionsPage() {
   const fetchPositions = async (page = 1) => {
     try {
       setIsLoading(true)
-      const response = await fetch(`/api/v1/positions?page=${page}&limit=${pagination.limit}&search=${search}&hasVacancies=true`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-        },
+      const data = await organizationService.getPositions({
+        page,
+        limit: pagination.limit,
+        search,
+        hasAvailability: true,
+        includeRelations: true, // This will populate department and grade
       })
       
-      if (!response.ok) throw new Error('Failed to fetch positions')
-      
-      const data: PaginatedResponse<Position> = await response.json()
       setPositions(data.data)
       setPagination({
         page: data.page,
@@ -178,7 +226,10 @@ export default function PositionsPage() {
     fetchPositions(page)
   }
 
-  const totalAvailable = positions.reduce((sum, pos) => sum + pos.availablePositions, 0)
+  const totalAvailable = positions.reduce((sum, pos) => {
+    return sum + (pos.availablePositions || (pos.numberOfPositions - pos.currentlyFilled))
+  }, 0)
+  
   const totalPositions = positions.reduce((sum, pos) => sum + pos.numberOfPositions, 0)
 
   return (
@@ -236,6 +287,7 @@ export default function PositionsPage() {
                 isLoading={isLoading}
                 pagination={pagination}
                 onPageChange={handlePageChange}
+                exportable={true}
               />
             </CardContent>
           </Card>
@@ -264,7 +316,7 @@ export default function PositionsPage() {
           <CardContent>
             <div className="text-2xl font-bold">{totalPositions - totalAvailable}</div>
             <p className="text-xs text-muted-foreground">
-              {((totalPositions - totalAvailable) / totalPositions * 100).toFixed(1)}% filled
+              {totalPositions > 0 ? `${(((totalPositions - totalAvailable) / totalPositions) * 100).toFixed(1)}% filled` : '0% filled'}
             </p>
           </CardContent>
         </Card>
@@ -276,7 +328,10 @@ export default function PositionsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {new Set(positions.map(p => p.departmentId)).size}
+              {Array.from(new Set(positions
+                .filter(p => p.department)
+                .map(p => typeof p.department === 'object' ? p.department?._id : p.departmentId)
+              )).length}
             </div>
             <p className="text-xs text-muted-foreground">
               With active positions

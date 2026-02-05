@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -13,6 +13,8 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ArrowLeft, Save } from 'lucide-react'
+import { Department, Position } from '@/types/organization'
+import { organizationService } from '@/services/api/organization-service'
 
 const departmentSchema = z.object({
   departmentName: z.string().min(2, 'Department name is required'),
@@ -28,6 +30,9 @@ export default function CreateDepartmentPage() {
   const router = useRouter()
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [departments, setDepartments] = useState<Department[]>([])
+  const [positions, setPositions] = useState<Position[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   const {
     register,
@@ -38,21 +43,42 @@ export default function CreateDepartmentPage() {
     resolver: zodResolver(departmentSchema),
   })
 
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  const loadData = async () => {
+    try {
+      setIsLoading(true)
+      const [deptsData, positionsData] = await Promise.all([
+        organizationService.getDepartments({ 
+          isActive: true,
+          limit: 100 
+        }),
+        organizationService.getPositions({ 
+          isActive: true,
+          limit: 100,
+          includeRelations: true 
+        })
+      ])
+      
+      setDepartments(deptsData.data)
+      setPositions(positionsData.data)
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: 'Failed to load data',
+        variant: 'error',
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const onSubmit = async (data: DepartmentFormData) => {
     try {
       setIsSubmitting(true)
-      const response = await fetch('/api/v1/departments', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-        },
-        body: JSON.stringify(data),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to create department')
-      }
+      await organizationService.createDepartment(data)
 
       toast({
         title: 'Success',
@@ -69,6 +95,17 @@ export default function CreateDepartmentPage() {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading data...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -139,9 +176,12 @@ export default function CreateDepartmentPage() {
                     <SelectValue placeholder="Select parent department" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="dept-1">IT Department</SelectItem>
-                    <SelectItem value="dept-2">Finance Department</SelectItem>
-                    <SelectItem value="dept-3">Operations Department</SelectItem>
+                    <SelectItem value="">None (Top-level)</SelectItem>
+                    {departments.map((dept) => (
+                      <SelectItem key={dept._id} value={dept._id}>
+                        {dept.departmentName} ({dept.departmentCode})
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -153,9 +193,14 @@ export default function CreateDepartmentPage() {
                     <SelectValue placeholder="Select department head" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="pos-1">IT Manager</SelectItem>
-                    <SelectItem value="pos-2">Finance Manager</SelectItem>
-                    <SelectItem value="pos-3">Operations Manager</SelectItem>
+                    <SelectItem value="">None</SelectItem>
+                    {positions
+                      .filter(pos => pos.isManagerRole || pos.isDirectorRole)
+                      .map((pos) => (
+                        <SelectItem key={pos._id} value={pos._id}>
+                          {pos.positionTitle} ({pos.positionCode})
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>

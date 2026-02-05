@@ -29,7 +29,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Grade, PaginatedResponse } from '@/types/organization/grade'
+import { Grade, PaginatedResponse } from '@/types/organization'
 
 const columns = [
   {
