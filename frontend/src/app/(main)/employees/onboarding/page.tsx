@@ -11,13 +11,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useEmployeeStore } from '@/store/slices/employee-slice'
-import { CalendarIcon, ArrowLeft } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 
-// Form validation schema
+// Updated validation schema to match backend
 const employeeSchema = z.object({
   firstName: z.string().min(2, 'First name is required'),
   middleName: z.string().optional(),
@@ -39,9 +38,19 @@ const employeeSchema = z.object({
   bankName: z.string().optional(),
   bankAccountNumber: z.string().optional(),
   bankBranch: z.string().optional(),
+  bankBranchCode: z.string().optional(),
+  bankSwiftCode: z.string().optional(),
+  currency: z.string().optional(),
   taxIdentificationNumber: z.string().optional(),
   pensionNumber: z.string().optional(),
+  socialSecurityNumber: z.string().optional(),
   currentBasicSalary: z.number().min(0, 'Salary must be positive'),
+  maritalStatus: z.string().optional(),
+  numberOfDependents: z.number().min(0).optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  country: z.string().optional(),
+  postalCode: z.string().optional(),
   createSystemAccess: z.boolean().default(false),
   systemUsername: z.string().optional(),
   isSupervisor: z.boolean().default(false),
@@ -73,6 +82,7 @@ export default function EmployeeOnboardingPage() {
     handleSubmit,
     watch,
     setValue,
+    trigger,
     formState: { errors, isSubmitting },
   } = useForm<EmployeeFormData>({
     resolver: zodResolver(employeeSchema),
@@ -82,12 +92,23 @@ export default function EmployeeOnboardingPage() {
       createSystemAccess: false,
       isSupervisor: false,
       isDepartmentManager: false,
+      currency: 'TZS',
+      country: 'Tanzania',
     },
   })
+
+  const departmentId = watch('departmentId')
+  const gradeId = watch('gradeId')
 
   useEffect(() => {
     loadDependencies()
   }, [])
+
+  useEffect(() => {
+    if (departmentId) {
+      loadPositionsForDepartment(departmentId)
+    }
+  }, [departmentId])
 
   const loadDependencies = async () => {
     try {
@@ -104,14 +125,11 @@ export default function EmployeeOnboardingPage() {
     }
   }
 
-  const handleDepartmentChange = async (departmentId: string) => {
-    setValue('departmentId', departmentId)
-    setValue('positionId', '') 
-    
+  const loadPositionsForDepartment = async (deptId: string) => {
     try {
       await fetchPositions({ 
-        departmentId,
-        hasVacancies: true // Ensure we only get available positions
+        departmentId: deptId,
+        hasVacancies: true
       })
     } catch (error: any) {
       toast({
@@ -120,10 +138,46 @@ export default function EmployeeOnboardingPage() {
         variant: 'error',
       })
     }
-}
+  }
+
+  const validateTab = async (currentTab: string): Promise<boolean> => {
+    let fieldsToValidate: (keyof EmployeeFormData)[] = []
+
+    switch (currentTab) {
+      case 'personal':
+        fieldsToValidate = ['firstName', 'lastName', 'dateOfBirth', 'gender', 
+                           'nationalId', 'email', 'phoneNumber']
+        break
+      case 'employment':
+        fieldsToValidate = ['departmentId', 'positionId', 'gradeId', 
+                           'employmentDate', 'contractType', 'currentBasicSalary']
+        break
+    }
+
+    const result = await trigger(fieldsToValidate)
+    return result
+  }
+
+  const handleTabChange = async (newTab: string) => {
+    if (newTab === activeTab) return
+
+    // Validate current tab before allowing navigation
+    const isValid = await validateTab(activeTab)
+    if (isValid) {
+      setActiveTab(newTab)
+    } else {
+      toast({
+        title: 'Validation Error',
+        description: 'Please fill in all required fields correctly',
+        variant: 'error',
+      })
+    }
+  }
 
   const onSubmit = async (data: EmployeeFormData) => {
     try {
+      console.log('Submitting employee data:', data)
+      
       const employee = await registerEmployee(data)
       
       toast({
@@ -131,18 +185,33 @@ export default function EmployeeOnboardingPage() {
         description: `Employee ${employee.firstName} ${employee.lastName} has been registered successfully`,
       })
       
-      router.push(`/employees/profiles/${employee._id}`)
+      // Based on 3-phase process:
+      // 1. Registration complete (Phase 1)
+      // 2. System access activation (Phase 2 - if createSystemAccess is true)
+      // 3. Profile verification (Phase 3 - employee does this themselves)
+      
+      if (data.createSystemAccess && data.systemUsername) {
+        // Navigate to system access activation page
+        router.push(`/employees/${employee._id}/activate-system-access`)
+      } else {
+        // Just go to employee profile
+        router.push(`/employees/profiles/${employee._id}`)
+      }
     } catch (error: any) {
+      console.error('Registration error:', error)
       toast({
         title: 'Error',
-        description: error.message,
+        description: error.message || 'Failed to register employee',
         variant: 'error',
       })
     }
   }
 
-  const departmentId = watch('departmentId')
-  const gradeId = watch('gradeId')
+  // Filter positions to show only those with vacancies
+  const availablePositions = positions.filter(pos => 
+    pos.availablePositions > 0 && 
+    (!departmentId || pos.departmentId === departmentId)
+  )
 
   return (
     <div className="space-y-6">
@@ -162,7 +231,7 @@ export default function EmployeeOnboardingPage() {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)}>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
           <TabsList className="grid grid-cols-3 w-full max-w-2xl">
             <TabsTrigger value="personal">Personal Information</TabsTrigger>
             <TabsTrigger value="employment">Employment Details</TabsTrigger>
@@ -184,6 +253,7 @@ export default function EmployeeOnboardingPage() {
                       id="firstName"
                       placeholder="John"
                       {...register('firstName')}
+                      className={errors.firstName ? 'border-red-500' : ''}
                     />
                     {errors.firstName && (
                       <p className="text-sm text-red-500">{errors.firstName.message}</p>
@@ -205,6 +275,7 @@ export default function EmployeeOnboardingPage() {
                       id="lastName"
                       placeholder="Doe"
                       {...register('lastName')}
+                      className={errors.lastName ? 'border-red-500' : ''}
                     />
                     {errors.lastName && (
                       <p className="text-sm text-red-500">{errors.lastName.message}</p>
@@ -219,6 +290,7 @@ export default function EmployeeOnboardingPage() {
                       id="dateOfBirth"
                       type="date"
                       {...register('dateOfBirth')}
+                      className={errors.dateOfBirth ? 'border-red-500' : ''}
                     />
                     {errors.dateOfBirth && (
                       <p className="text-sm text-red-500">{errors.dateOfBirth.message}</p>
@@ -227,8 +299,11 @@ export default function EmployeeOnboardingPage() {
                   
                   <div className="space-y-2">
                     <Label htmlFor="gender">Gender *</Label>
-                    <Select onValueChange={(value) => setValue('gender', value as any)}>
-                      <SelectTrigger>
+                    <Select 
+                      onValueChange={(value) => setValue('gender', value as any)}
+                      defaultValue="male"
+                    >
+                      <SelectTrigger className={errors.gender ? 'border-red-500' : ''}>
                         <SelectValue placeholder="Select gender" />
                       </SelectTrigger>
                       <SelectContent>
@@ -250,6 +325,7 @@ export default function EmployeeOnboardingPage() {
                       id="nationalId"
                       placeholder="1234567890123"
                       {...register('nationalId')}
+                      className={errors.nationalId ? 'border-red-500' : ''}
                     />
                     {errors.nationalId && (
                       <p className="text-sm text-red-500">{errors.nationalId.message}</p>
@@ -260,8 +336,9 @@ export default function EmployeeOnboardingPage() {
                     <Label htmlFor="phoneNumber">Phone Number *</Label>
                     <Input
                       id="phoneNumber"
-                      placeholder="+265 888 000 000"
+                      placeholder="+255 123 456 789"
                       {...register('phoneNumber')}
+                      className={errors.phoneNumber ? 'border-red-500' : ''}
                     />
                     {errors.phoneNumber && (
                       <p className="text-sm text-red-500">{errors.phoneNumber.message}</p>
@@ -277,6 +354,7 @@ export default function EmployeeOnboardingPage() {
                       type="email"
                       placeholder="john.doe@company.com"
                       {...register('email')}
+                      className={errors.email ? 'border-red-500' : ''}
                     />
                     {errors.email && (
                       <p className="text-sm text-red-500">{errors.email.message}</p>
@@ -308,7 +386,7 @@ export default function EmployeeOnboardingPage() {
                     <Label htmlFor="emergencyContactPhone">Emergency Contact Phone</Label>
                     <Input
                       id="emergencyContactPhone"
-                      placeholder="+265 999 000 000"
+                      placeholder="+255 987 654 321"
                       {...register('emergencyContactPhone')}
                     />
                   </div>
@@ -317,7 +395,10 @@ export default function EmployeeOnboardingPage() {
             </Card>
 
             <div className="flex justify-end">
-              <Button type="button" onClick={() => setActiveTab('employment')}>
+              <Button 
+                type="button" 
+                onClick={() => handleTabChange('employment')}
+              >
                 Next: Employment Details
               </Button>
             </div>
@@ -335,10 +416,13 @@ export default function EmployeeOnboardingPage() {
                   <div className="space-y-2">
                     <Label htmlFor="departmentId">Department *</Label>
                     <Select 
-                      onValueChange={handleDepartmentChange}
+                      onValueChange={(value) => {
+                        setValue('departmentId', value)
+                        setValue('positionId', '')
+                      }}
                       disabled={isLoading}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className={errors.departmentId ? 'border-red-500' : ''}>
                         <SelectValue placeholder="Select department" />
                       </SelectTrigger>
                       <SelectContent>
@@ -355,40 +439,39 @@ export default function EmployeeOnboardingPage() {
                   </div>
                   
                   <div className="space-y-2">
-                  <Label htmlFor="positionId">Position *</Label>
-                  <Select 
-                    onValueChange={(value) => setValue('positionId', value)}
-                    disabled={!departmentId || isLoading}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={
-                        !departmentId 
-                          ? "Select department first"
-                          : positions.filter(pos => pos.availablePositions > 0).length === 0
-                          ? "No available positions"
-                          : "Select position"
-                      } />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {positions
-                        .filter(pos => pos.availablePositions > 0)
-                        .map((pos) => (
+                    <Label htmlFor="positionId">Position *</Label>
+                    <Select 
+                      onValueChange={(value) => setValue('positionId', value)}
+                      disabled={!departmentId || isLoading || availablePositions.length === 0}
+                      value={watch('positionId')}
+                    >
+                      <SelectTrigger className={errors.positionId ? 'border-red-500' : ''}>
+                        <SelectValue placeholder={
+                          !departmentId 
+                            ? "Select department first"
+                            : availablePositions.length === 0
+                            ? "No available positions"
+                            : "Select position"
+                        } />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availablePositions.map((pos) => (
                           <SelectItem key={pos._id} value={pos._id}>
                             {pos.positionTitle} ({pos.availablePositions} available)
                           </SelectItem>
                         ))}
-                      
-                      {positions.filter(pos => pos.availablePositions > 0).length === 0 && (
-                        <div className="px-2 py-3 text-sm text-gray-500 text-center">
-                          No available positions in this department
-                        </div>
-                      )}
-                    </SelectContent>
-                  </Select>
-                  {errors.positionId && (
-                    <p className="text-sm text-red-500">{errors.positionId.message}</p>
-                  )}
-                </div>
+                        
+                        {availablePositions.length === 0 && departmentId && (
+                          <div className="px-2 py-3 text-sm text-gray-500 text-center">
+                            No available positions in this department
+                          </div>
+                        )}
+                      </SelectContent>
+                    </Select>
+                    {errors.positionId && (
+                      <p className="text-sm text-red-500">{errors.positionId.message}</p>
+                    )}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -398,7 +481,7 @@ export default function EmployeeOnboardingPage() {
                       onValueChange={(value) => setValue('gradeId', value)}
                       disabled={isLoading}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className={errors.gradeId ? 'border-red-500' : ''}>
                         <SelectValue placeholder="Select grade" />
                       </SelectTrigger>
                       <SelectContent>
@@ -420,6 +503,7 @@ export default function EmployeeOnboardingPage() {
                       id="employmentDate"
                       type="date"
                       {...register('employmentDate')}
+                      className={errors.employmentDate ? 'border-red-500' : ''}
                     />
                     {errors.employmentDate && (
                       <p className="text-sm text-red-500">{errors.employmentDate.message}</p>
@@ -430,8 +514,11 @@ export default function EmployeeOnboardingPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="contractType">Contract Type *</Label>
-                    <Select onValueChange={(value) => setValue('contractType', value as any)}>
-                      <SelectTrigger>
+                    <Select 
+                      onValueChange={(value) => setValue('contractType', value as any)}
+                      defaultValue="PROBATION"
+                    >
+                      <SelectTrigger className={errors.contractType ? 'border-red-500' : ''}>
                         <SelectValue placeholder="Select contract type" />
                       </SelectTrigger>
                       <SelectContent>
@@ -446,12 +533,13 @@ export default function EmployeeOnboardingPage() {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="currentBasicSalary">Basic Salary (MWK) *</Label>
+                    <Label htmlFor="currentBasicSalary">Basic Salary (TZS) *</Label>
                     <Input
                       id="currentBasicSalary"
                       type="number"
                       placeholder="750000"
                       {...register('currentBasicSalary', { valueAsNumber: true })}
+                      className={errors.currentBasicSalary ? 'border-red-500' : ''}
                     />
                     {errors.currentBasicSalary && (
                       <p className="text-sm text-red-500">{errors.currentBasicSalary.message}</p>
@@ -466,7 +554,7 @@ export default function EmployeeOnboardingPage() {
                       <Label htmlFor="bankName">Bank Name</Label>
                       <Input
                         id="bankName"
-                        placeholder="National Bank of Malawi"
+                        placeholder="CRDB Bank"
                         {...register('bankName')}
                       />
                     </div>
@@ -475,7 +563,7 @@ export default function EmployeeOnboardingPage() {
                       <Label htmlFor="bankAccountNumber">Account Number</Label>
                       <Input
                         id="bankAccountNumber"
-                        placeholder="1234567890"
+                        placeholder="0151234567890"
                         {...register('bankAccountNumber')}
                       />
                     </div>
@@ -484,28 +572,102 @@ export default function EmployeeOnboardingPage() {
                       <Label htmlFor="bankBranch">Branch</Label>
                       <Input
                         id="bankBranch"
-                        placeholder="Area 18 Branch"
+                        placeholder="Dar es Salaam City Center"
                         {...register('bankBranch')}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="bankBranchCode">Branch Code</Label>
+                      <Input
+                        id="bankBranchCode"
+                        placeholder="1300"
+                        {...register('bankBranchCode')}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="bankSwiftCode">SWIFT Code</Label>
+                      <Input
+                        id="bankSwiftCode"
+                        placeholder="CORUTZTZ"
+                        {...register('bankSwiftCode')}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="currency">Currency</Label>
+                      <Input
+                        id="currency"
+                        placeholder="TZS"
+                        {...register('currency')}
+                        defaultValue="TZS"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="taxIdentificationNumber">Tax PIN</Label>
+                    <Input
+                      id="taxIdentificationNumber"
+                      placeholder="TPIN123456789"
+                      {...register('taxIdentificationNumber')}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="pensionNumber">Pension Number</Label>
+                    <Input
+                      id="pensionNumber"
+                      placeholder="PEN123456"
+                      {...register('pensionNumber')}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Address Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="address">Address</Label>
+                      <Input
+                        id="address"
+                        placeholder="123 Main Street, Kinondoni"
+                        {...register('address')}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="city">City</Label>
+                      <Input
+                        id="city"
+                        placeholder="Dar es Salaam"
+                        {...register('city')}
                       />
                     </div>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="taxIdentificationNumber">Tax PIN</Label>
+                      <Label htmlFor="country">Country</Label>
                       <Input
-                        id="taxIdentificationNumber"
-                        placeholder="TPIN123456789"
-                        {...register('taxIdentificationNumber')}
+                        id="country"
+                        placeholder="Tanzania"
+                        {...register('country')}
+                        defaultValue="Tanzania"
                       />
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="pensionNumber">Pension Number</Label>
+                      <Label htmlFor="postalCode">Postal Code</Label>
                       <Input
-                        id="pensionNumber"
-                        placeholder="MLPF123456"
-                        {...register('pensionNumber')}
+                        id="postalCode"
+                        placeholder="14112"
+                        {...register('postalCode')}
                       />
                     </div>
                   </div>
@@ -523,7 +685,7 @@ export default function EmployeeOnboardingPage() {
               </Button>
               <Button 
                 type="button" 
-                onClick={() => setActiveTab('system')}
+                onClick={() => handleTabChange('system')}
               >
                 Next: System Access
               </Button>
@@ -547,7 +709,14 @@ export default function EmployeeOnboardingPage() {
                   </div>
                   <Switch
                     checked={createSystemAccess}
-                    onCheckedChange={setCreateSystemAccess}
+                    onCheckedChange={(checked) => {
+                      setCreateSystemAccess(checked)
+                      setValue('createSystemAccess', checked)
+                      if (!checked) {
+                        setValue('systemUsername', '')
+                        setValue('systemRole', '')
+                      }
+                    }}
                   />
                 </div>
 
@@ -560,6 +729,7 @@ export default function EmployeeOnboardingPage() {
                           id="systemUsername"
                           placeholder="john.doe"
                           {...register('systemUsername')}
+                          required={createSystemAccess}
                         />
                         {errors.systemUsername && (
                           <p className="text-sm text-red-500">{errors.systemUsername.message}</p>
@@ -568,7 +738,10 @@ export default function EmployeeOnboardingPage() {
                       
                       <div className="space-y-2">
                         <Label htmlFor="systemRole">System Role</Label>
-                        <Select onValueChange={(value) => setValue('systemRole', value)}>
+                        <Select 
+                          onValueChange={(value) => setValue('systemRole', value)}
+                          required={createSystemAccess}
+                        >
                           <SelectTrigger>
                             <SelectValue placeholder="Select role" />
                           </SelectTrigger>

@@ -10,6 +10,14 @@ import type {
   PaginatedResponse 
 } from '@/types/employee/employee'
 
+// Add interface for registration status
+interface RegistrationStatus {
+  hasSystemAccess: boolean
+  profileVerified: boolean
+  registrationComplete: boolean
+  registrationStatus: string
+}
+
 interface EmployeeState {
   // State
   employees: Employee[]
@@ -56,11 +64,7 @@ interface EmployeeState {
   
   verifyProfile: (employeeId: string) => Promise<void>
   
-  getRegistrationStatus: (employeeId: string) => Promise<{
-    hasSystemAccess: boolean
-    profileVerified: boolean
-    registrationComplete: boolean
-  }>
+  getRegistrationStatus: (employeeId: string) => Promise<RegistrationStatus>
   
   requestRegistration: (data: Partial<EmployeeRegistrationData>) => Promise<Employee>
   
@@ -92,6 +96,8 @@ interface EmployeeState {
     minLevel?: number
     maxLevel?: number
   }) => Promise<void>
+  
+  updateEmployee: (employeeId: string, updates: Partial<Employee>) => Promise<Employee>
   
   setFilters: (filters: Partial<EmployeeState['filters']>) => void
   
@@ -267,36 +273,68 @@ export const useEmployeeStore = create<EmployeeState>((set, get) => ({
   },
   
   fetchPositions: async (params = {}) => {
+    set({ isLoading: true, error: null })
+    
+    try {
+      // Always filter for active positions with vacancies by default
+      const response = await employeeService.getPositions({
+        ...params,
+        isActive: true,
+        hasVacancies: true, 
+      })
+      
+      set({ 
+        positions: response.data, 
+        isLoading: false 
+      })
+    } catch (error: any) {
+      set({ 
+        error: error.message, 
+        isLoading: false,
+        positions: [] // Reset positions on error
+      })
+      throw error
+    }
+  },
+  
+fetchGrades: async (params = {}) => {
   set({ isLoading: true, error: null })
   
   try {
-    // Always filter for active positions with vacancies by default
-    const response = await employeeService.getPositions({
-      ...params,
-      isActive: true,
-      hasVacancies: true, 
-    })
-    
-    set({ 
-      positions: response.data, 
-      isLoading: false 
-    })
+    const response = await employeeService.getGrades(params)
+    // Add default band if missing
+    const gradesWithBand = response.data.map(grade => ({
+      ...grade,
+      band: grade.band || 'N/A' // Provide default value
+    }))
+    set({ grades: gradesWithBand, isLoading: false })
   } catch (error: any) {
-    set({ 
-      error: error.message, 
-      isLoading: false,
-      positions: [] // Reset positions on error
-    })
+    set({ error: error.message, isLoading: false })
     throw error
   }
 },
   
-  fetchGrades: async (params = {}) => {
+  updateEmployee: async (employeeId: string, updates: Partial<Employee>) => {
     set({ isLoading: true, error: null })
     
     try {
-      const response = await employeeService.getGrades(params)
-      set({ grades: response.data, isLoading: false })
+      const employee = await employeeService.updateEmployee(employeeId, updates)
+      
+      // Update current employee if it's the same one
+      const { currentEmployee } = get()
+      if (currentEmployee && currentEmployee._id === employeeId) {
+        set({ currentEmployee: employee })
+      }
+      
+      // Update employees list
+      set(state => ({
+        employees: state.employees.map(emp => 
+          emp._id === employeeId ? { ...emp, ...employee } : emp
+        ),
+        isLoading: false,
+      }))
+      
+      return employee
     } catch (error: any) {
       set({ error: error.message, isLoading: false })
       throw error

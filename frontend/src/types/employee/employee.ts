@@ -67,6 +67,18 @@ export interface Employee {
   systemUsername?: string
   systemRole?: string
   isSupervisor: boolean
+  bankBranchCode?: string;
+  bankSwiftCode?: string;
+  currency?: string;
+  socialSecurityNumber?: string;
+  maritalStatus?: string;
+  numberOfDependents?: number;
+  address?: string;
+  city?: string;
+  country?: string;
+  postalCode?: string;
+  profilePhoto?: string;
+  registrationStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'COMPLETED';
   isDepartmentManager: boolean
   profileVerified: boolean
   createdAt: string
@@ -108,8 +120,7 @@ export interface Grade {
   name: string
   code: string
   level: number
-  band: string
-  description: string
+  band?: string  
   compensation: {
     basicSalary: {
       min: number
@@ -157,6 +168,16 @@ export interface EmployeeRegistrationData {
   pensionNumber?: string
   currentBasicSalary: number
   createSystemAccess: boolean
+  bankBranchCode?: string;
+  bankSwiftCode?: string;
+  currency?: string;
+  socialSecurityNumber?: string;
+  maritalStatus?: string;
+  numberOfDependents?: number;
+  address?: string;
+  city?: string;
+  country?: string;
+  postalCode?: string;
   systemUsername?: string
   isSupervisor: boolean
   isDepartmentManager: boolean
