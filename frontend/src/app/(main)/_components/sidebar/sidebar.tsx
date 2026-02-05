@@ -280,7 +280,7 @@ const iconMap: Record<string, React.ComponentType<any>> = {
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { user, logout, getNavigationItems } = useAuth();
+  const { user, logout, getNavigationItems, getOrganizationSubItems } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
 
   if (!user) {
@@ -288,6 +288,13 @@ export function Sidebar() {
   }
 
   const navigationItems = getNavigationItems();
+  
+  // Get organization sub-items if user has access
+  const organizationSubItems = getOrganizationSubItems();
+  const hasOrganizationAccess = organizationSubItems.length > 0;
+
+  // Check if current page is in organization module
+  const isInOrganizationModule = pathname.startsWith('/organization');
 
   // Add settings and help items if not already included
   const secondaryItems = [
@@ -358,44 +365,70 @@ export function Sidebar() {
             {navigationItems.map((item) => {
               const Icon = iconMap[item.icon] || iconMap['home'];
               const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+              const isOrganizationItem = item.name === 'Organization';
 
               return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={cn(
-                    'group flex items-center rounded-lg px-3 py-3 text-sm font-medium transition-colors relative',
-                    isActive
-                      ? 'bg-emerald-500/20 text-white' // Green shade for active
-                      : 'text-white/90 hover:bg-white/10 hover:text-white',
-                    collapsed && 'justify-center'
-                  )}
-                >
-                  <Icon
+                <div key={item.name} className="relative">
+                  <Link
+                    href={item.href}
                     className={cn(
-                      'h-5 w-5 flex-shrink-0',
+                      'group flex items-center rounded-lg px-3 py-3 text-sm font-medium transition-colors relative',
                       isActive
-                        ? 'text-yellow-500' // Yellow for active icons
-                        : 'text-yellow-500/90 group-hover:text-yellow-400', // Yellow-500 for normal
-                      !collapsed && 'mr-3'
+                        ? 'bg-emerald-500/20 text-white' // Green shade for active
+                        : 'text-white/90 hover:bg-white/10 hover:text-white',
+                      collapsed && 'justify-center'
                     )}
-                  />
-                  {!collapsed && (
-                    <div className="flex items-center justify-between w-full">
-                      <span>{item.name}</span>
-                      {item.badge && (
-                        <Badge className="text-xs bg-yellow-500 text-gray-900 font-semibold">
-                          {item.badge}
-                        </Badge>
+                  >
+                    <Icon
+                      className={cn(
+                        'h-5 w-5 flex-shrink-0',
+                        isActive
+                          ? 'text-yellow-500' // Yellow for active icons
+                          : 'text-yellow-500/90 group-hover:text-yellow-400', // Yellow-500 for normal
+                        !collapsed && 'mr-3'
                       )}
+                    />
+                    {!collapsed && (
+                      <div className="flex items-center justify-between w-full">
+                        <span>{item.name}</span>
+                        {item.badge && (
+                          <Badge className="text-xs bg-yellow-500 text-gray-900 font-semibold">
+                            {item.badge}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+                    {collapsed && (
+                      <div className="absolute left-full ml-2 hidden rounded-md bg-gray-900 px-2 py-1 text-xs text-white group-hover:block z-50">
+                        {item.name}
+                      </div>
+                    )}
+                  </Link>
+
+                  {/* Organization Sub-menu */}
+                  {isOrganizationItem && hasOrganizationAccess && !collapsed && isInOrganizationModule && (
+                    <div className="ml-8 mt-1 space-y-1 border-l-2 border-emerald-500/20 pl-3">
+                      {organizationSubItems.map((subItem) => {
+                        const isSubActive = pathname === subItem.href || pathname.startsWith(`${subItem.href}/`);
+                        
+                        return (
+                          <Link
+                            key={subItem.name}
+                            href={subItem.href}
+                            className={cn(
+                              'group flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                              isSubActive
+                                ? 'bg-emerald-500/10 text-yellow-400' // Lighter green for active sub-item
+                                : 'text-white/70 hover:bg-white/5 hover:text-white'
+                            )}
+                          >
+                            <span className="ml-1">{subItem.name}</span>
+                          </Link>
+                        );
+                      })}
                     </div>
                   )}
-                  {collapsed && (
-                    <div className="absolute left-full ml-2 hidden rounded-md bg-gray-900 px-2 py-1 text-xs text-white group-hover:block z-50">
-                      {item.name}
-                    </div>
-                  )}
-                </Link>
+                </div>
               );
             })}
           </div>
