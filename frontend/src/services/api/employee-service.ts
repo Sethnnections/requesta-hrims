@@ -292,7 +292,6 @@ export class EmployeeService {
     departmentId?: string;
     gradeId?: string;
     isActive?: boolean;
-    hasVacancies?: boolean;
   }): Promise<PaginatedResponse<Position>> {
     const token = localStorage.getItem('accessToken');
     const queryParams = new URLSearchParams();
@@ -354,7 +353,23 @@ export class EmployeeService {
     return response.json();
   }
 
-  // Add this method to your EmployeeService class
+ async getPositionsByDepartment(departmentId: string): Promise<Position[]> {
+  const token = localStorage.getItem('accessToken');
+    
+    const response = await fetch(`${this.baseUrl}/positions/department/${departmentId}/hierarchy`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to fetch positions for department');
+    }
+    
+    return response.json();
+  }
   async updateEmployee(employeeId: string, updates: Partial<Employee>): Promise<Employee> {
     const token = localStorage.getItem('accessToken');
 

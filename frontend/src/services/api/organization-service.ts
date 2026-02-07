@@ -172,6 +172,7 @@ export const organizationService = {
   getPositionById: async (positionId: string): Promise<Position> => {
     return fetchWithAuth(`/positions/${positionId}`)
   },
+  
 
   createPosition: async (data: {
     positionTitle: string

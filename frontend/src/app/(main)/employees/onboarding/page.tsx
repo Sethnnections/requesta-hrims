@@ -69,6 +69,7 @@ export default function EmployeeOnboardingPage() {
     grades, 
     isLoading, 
     fetchDepartments, 
+    fetchPositionsByDepartment,
     fetchPositions, 
     fetchGrades,
     registerEmployee 
@@ -125,20 +126,17 @@ export default function EmployeeOnboardingPage() {
     }
   }
 
-  const loadPositionsForDepartment = async (deptId: string) => {
-    try {
-      await fetchPositions({ 
-        departmentId: deptId,
-        hasVacancies: true
-      })
-    } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: 'Failed to load positions for this department',
-        variant: 'error',
-      })
-    }
+const loadPositionsForDepartment = async (deptId: string) => {
+  try {
+    await fetchPositionsByDepartment(deptId);
+  } catch (error: any) {
+    toast({
+      title: 'Error',
+      description: 'Failed to load positions for this department',
+      variant: 'error',
+    });
   }
+}
 
   const validateTab = async (currentTab: string): Promise<boolean> => {
     let fieldsToValidate: (keyof EmployeeFormData)[] = []
@@ -207,11 +205,13 @@ export default function EmployeeOnboardingPage() {
     }
   }
 
-  // Filter positions to show only those with vacancies
-  const availablePositions = positions.filter(pos => 
-    pos.availablePositions > 0 && 
-    (!departmentId || pos.departmentId === departmentId)
-  )
+  // Filter positions - adjust based on what data is returned
+const availablePositions = positions.filter(pos => {
+  // If availablePositions exists, check if > 0, otherwise show all positions
+  const hasVacancies = pos.availablePositions === undefined || pos.availablePositions > 0;
+  const isInDepartment = !departmentId || pos.departmentId === departmentId;
+  return hasVacancies && isInDepartment;
+});
 
   return (
     <div className="space-y-6">
@@ -806,3 +806,4 @@ export default function EmployeeOnboardingPage() {
     </div>
   )
 }
+

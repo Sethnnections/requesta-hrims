@@ -71,6 +71,9 @@ interface EmployeeState {
   approveRegistration: (employeeId: string) => Promise<Employee>
   
   checkSupervisorStatus: (employeeId: string) => Promise<void>
+
+  fetchPositionsByDepartment: (departmentId: string) => Promise<void>
+
   
   fetchDepartments: (params?: {
     page?: number
@@ -102,6 +105,8 @@ interface EmployeeState {
   setFilters: (filters: Partial<EmployeeState['filters']>) => void
   
   clearError: () => void
+
+  
 }
 
 export const useEmployeeStore = create<EmployeeState>((set, get) => ({
@@ -248,54 +253,77 @@ export const useEmployeeStore = create<EmployeeState>((set, get) => ({
     }
   },
   
-  checkSupervisorStatus: async (employeeId: string) => {
-    set({ isLoading: true, error: null })
-    
-    try {
-      await employeeService.checkSupervisorStatus(employeeId)
-      set({ isLoading: false })
-    } catch (error: any) {
-      set({ error: error.message, isLoading: false })
-      throw error
-    }
-  },
+ checkSupervisorStatus: async (employeeId: string) => {
+  set({ isLoading: true, error: null })
   
-  fetchDepartments: async (params = {}) => {
-    set({ isLoading: true, error: null })
-    
-    try {
-      const response = await employeeService.getDepartments(params)
-      set({ departments: response.data, isLoading: false })
-    } catch (error: any) {
-      set({ error: error.message, isLoading: false })
-      throw error
-    }
-  },
+  try {
+    await employeeService.checkSupervisorStatus(employeeId)
+    set({ isLoading: false })
+  } catch (error: any) {
+    set({ error: error.message, isLoading: false })
+    throw error
+  }
+},
+
+fetchPositionsByDepartment: async (departmentId: string) => {
+  set({ isLoading: true, error: null })
   
-  fetchPositions: async (params = {}) => {
-    set({ isLoading: true, error: null })
+  try {
+    const response = await employeeService.getPositions({
+      departmentId,
+      isActive: true,
+    })
     
-    try {
-      // Always filter for active positions with vacancies by default
-      const response = await employeeService.getPositions({
-        ...params,
-        isActive: true,
-        hasVacancies: true, 
-      })
-      
-      set({ 
-        positions: response.data, 
-        isLoading: false 
-      })
-    } catch (error: any) {
-      set({ 
-        error: error.message, 
-        isLoading: false,
-        positions: [] // Reset positions on error
-      })
-      throw error
-    }
-  },
+    set({ 
+      positions: response.data, 
+      isLoading: false 
+    })
+  } catch (error: any) {
+    set({ 
+      error: error.message, 
+      isLoading: false,
+      positions: [] 
+    })
+    throw error
+  }
+},
+
+fetchDepartments: async (params = {}) => {
+  set({ isLoading: true, error: null })
+  
+  try {
+    const response = await employeeService.getDepartments(params)
+    set({ departments: response.data, isLoading: false })
+  } catch (error: any) {
+    set({ error: error.message, isLoading: false })
+    throw error
+  }
+},
+  
+fetchPositions: async (params = {}) => {
+  set({ isLoading: true, error: null })
+  
+  try {
+    // Remove hasVacancies: true from default params
+    const response = await employeeService.getPositions({
+      ...params,
+      isActive: true,
+      // Remove: hasVacancies: true,
+    })
+    
+    set({ 
+      positions: response.data, 
+      isLoading: false 
+    })
+  } catch (error: any) {
+    set({ 
+      error: error.message, 
+      isLoading: false,
+      positions: [] 
+    })
+    throw error
+  }
+},
   
 fetchGrades: async (params = {}) => {
   set({ isLoading: true, error: null })

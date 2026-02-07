@@ -436,7 +436,7 @@ const handleUpdateEmployee = async () => {
               <div>
                 <div className="text-sm text-gray-500">Salary</div>
                 <div className="font-semibold">
-                  {formatCurrency(currentEmployee.currentBasicSalary, 'TZS')}
+                  {formatCurrency(currentEmployee.currentBasicSalary, 'MWK')}
                 </div>
               </div>
             </div>
@@ -813,7 +813,7 @@ const handleUpdateEmployee = async () => {
                 <div className="space-y-2">
                   <div className="text-sm text-gray-500">Basic Salary</div>
                   <div className="text-3xl font-bold text-requesta-primary">
-                    {formatCurrency(currentEmployee.currentBasicSalary, 'TZS')}
+                    {formatCurrency(currentEmployee.currentBasicSalary, 'MWK')}
                   </div>
                   <div className="text-sm text-gray-500">Per month</div>
                 </div>
@@ -825,19 +825,19 @@ const handleUpdateEmployee = async () => {
                       <div className="flex justify-between items-center">
                         <span className="text-gray-600">House Allowance</span>
                         <span className="font-medium">
-                          {formatCurrency(currentEmployee.gradeId.compensation.houseAllowance, 'TZS')}
+                          {formatCurrency(currentEmployee.gradeId.compensation.houseAllowance, 'MWK')}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-gray-600">Car Allowance</span>
                         <span className="font-medium">
-                          {formatCurrency(currentEmployee.gradeId.compensation.carAllowance, 'TZS')}
+                          {formatCurrency(currentEmployee.gradeId.compensation.carAllowance, 'MWK')}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-gray-600">Travel Allowance</span>
                         <span className="font-medium">
-                          {formatCurrency(currentEmployee.gradeId.compensation.travelAllowance, 'TZS')}
+                          {formatCurrency(currentEmployee.gradeId.compensation.travelAllowance, 'MWK')}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
@@ -857,19 +857,19 @@ const handleUpdateEmployee = async () => {
                       <div className="flex justify-between items-center">
                         <span className="text-gray-600">Minimum</span>
                         <span className="font-medium">
-                          {formatCurrency(currentEmployee.gradeId.compensation.basicSalary.min, 'TZS')}
+                          {formatCurrency(currentEmployee.gradeId.compensation.basicSalary.min, 'MWK')}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-gray-600">Midpoint</span>
                         <span className="font-medium">
-                          {formatCurrency(currentEmployee.gradeId.compensation.basicSalary.mid, 'TZS')}
+                          {formatCurrency(currentEmployee.gradeId.compensation.basicSalary.mid, 'MWK')}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-gray-600">Maximum</span>
                         <span className="font-medium">
-                          {formatCurrency(currentEmployee.gradeId.compensation.basicSalary.max, 'TZS')}
+                          {formatCurrency(currentEmployee.gradeId.compensation.basicSalary.max, 'MWK')}
                         </span>
                       </div>
                     </div>
@@ -920,7 +920,7 @@ const handleUpdateEmployee = async () => {
                           <div className="flex justify-between items-center">
                             <span className="text-gray-600">Max Loan Amount</span>
                             <span className="font-medium">
-                              {formatCurrency(currentEmployee.gradeId.limits.maxLoanAmount, 'TZS')}
+                              {formatCurrency(currentEmployee.gradeId.limits.maxLoanAmount, 'MWK')}
                             </span>
                           </div>
                           <div className="flex justify-between items-center">
