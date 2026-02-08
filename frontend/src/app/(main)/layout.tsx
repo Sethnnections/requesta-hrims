@@ -4,6 +4,7 @@ import { ProtectedLayout } from './_components/layout/protected-layout'
 import { Sidebar } from './_components/sidebar/sidebar'
 import { Header } from './_components/header/header'
 import { Footer } from './_components/footer/footer'
+import { Breadcrumbs } from './_components/breadcrumbs/breadcrumbs'
 import { Toaster } from '@/components//ui/toster'
 import { useState, useEffect } from 'react'
 
@@ -46,7 +47,8 @@ export default function MainLayout({
         >
           <Header />
           <main className="flex-1 w-full bg-gray-50">
-            <div className="w-full px-4 py-8 sm:px-6 lg:px-8">
+            <div className="w-full px-4 py-6 sm:px-6 lg:px-8">
+              <Breadcrumbs />
               {children}
             </div>
           </main>
