@@ -110,136 +110,156 @@ export function useAuth() {
   );
 
   // Role-based navigation items
-  const getNavigationItems = useCallback(() => {
-    if (!user) return [];
+ const getNavigationItems = useCallback(() => {
+  if (!user) return [];
 
-    const baseItems: Array<{ name: string; href: string; icon: string; badge?: string }> = [
-      { name: 'Dashboard', href: '/dashboard', icon: 'home' },
-      { name: 'My Profile', href: '/profile', icon: 'user' },
-    ];
+  const baseItems: Array<{ name: string; href: string; icon: string; badge?: string }> = [
+    { name: 'Dashboard', href: '/dashboard', icon: 'home' },
+    { name: 'My Profile', href: '/profile', icon: 'user' },
+  ];
 
-    // Employees - Check all employee permissions
-    if (
-      hasPerm(PERMISSIONS.EMPLOYEES_MANAGE_ALL) ||
-      hasPerm(PERMISSIONS.EMPLOYEES_MANAGE_DEPARTMENT) ||
-      hasPerm(PERMISSIONS.EMPLOYEES_VIEW)
-    ) {
-      baseItems.push({ name: 'Employees', href: '/employees/directory', icon: 'users' });
-    }
+  // Employees - Check all employee permissions
+  if (
+    hasPerm(PERMISSIONS.EMPLOYEES_MANAGE_ALL) ||
+    hasPerm(PERMISSIONS.EMPLOYEES_MANAGE_DEPARTMENT) ||
+    hasPerm(PERMISSIONS.EMPLOYEES_VIEW)
+  ) {
+    baseItems.push({ name: 'Employees', href: '/employees/directory', icon: 'users' });
+  }
 
-    // Loans - Check all loan permissions
-    if (
-      hasPerm(PERMISSIONS.LOANS_MANAGE) ||
-      hasPerm(PERMISSIONS.LOANS_APPROVE) ||
-      hasPerm(PERMISSIONS.REQUESTS_CREATE)
-    ) {
-      baseItems.push({ name: 'Loans', href: '/loans/applications', icon: 'banknote' });
-    }
+  // Loans - Check all loan permissions
+  if (
+    hasPerm(PERMISSIONS.LOANS_MANAGE) ||
+    hasPerm(PERMISSIONS.LOANS_APPROVE) ||
+    hasPerm(PERMISSIONS.REQUESTS_CREATE)
+  ) {
+    baseItems.push({ name: 'Loans', href: '/loans/applications', icon: 'banknote' });
+  }
 
-    // Travel - Check all travel permissions
-    if (
-      hasPerm(PERMISSIONS.TRAVEL_MANAGE) ||
-      hasPerm(PERMISSIONS.TRAVEL_APPROVE) ||
-      hasPerm(PERMISSIONS.REQUESTS_CREATE)
-    ) {
-      baseItems.push({ name: 'Travel', href: '/travel/requests', icon: 'plane' });
-    }
+  // Travel - Check all travel permissions
+  if (
+    hasPerm(PERMISSIONS.TRAVEL_MANAGE) ||
+    hasPerm(PERMISSIONS.TRAVEL_APPROVE) ||
+    hasPerm(PERMISSIONS.REQUESTS_CREATE)
+  ) {
+    baseItems.push({ name: 'Travel', href: '/travel/requests', icon: 'plane' });
+  }
 
-    // Overtime - Check all overtime permissions
-    if (
-      hasPerm(PERMISSIONS.OVERTIME_MANAGE) ||
-      hasPerm(PERMISSIONS.OVERTIME_APPROVE) ||
-      hasPerm(PERMISSIONS.REQUESTS_CREATE)
-    ) {
-      baseItems.push({ name: 'Overtime', href: '/overtime/claims', icon: 'clock' });
-    }
+  // Overtime - Check all overtime permissions
+  if (
+    hasPerm(PERMISSIONS.OVERTIME_MANAGE) ||
+    hasPerm(PERMISSIONS.OVERTIME_APPROVE) ||
+    hasPerm(PERMISSIONS.REQUESTS_CREATE)
+  ) {
+    baseItems.push({ name: 'Overtime', href: '/overtime/claims', icon: 'clock' });
+  }
 
-    // Payroll - Check payroll permissions
-    if (hasPerm(PERMISSIONS.PAYROLL_MANAGE)) {
-      baseItems.push({ name: 'Payroll', href: '/payroll/payslips', icon: 'dollar-sign' });
-    }
+  // Payroll - Check payroll permissions
+  if (hasPerm(PERMISSIONS.PAYROLL_MANAGE)) {
+    baseItems.push({ name: 'Payroll', href: '/payroll/payslips', icon: 'dollar-sign' });
+  }
 
-    // Reports - Check report permissions
-    if (hasPerm(PERMISSIONS.REPORTS_VIEW) || hasPerm(PERMISSIONS.REPORTS_GENERATE)) {
-      baseItems.push({ name: 'Reports', href: '/reports', icon: 'bar-chart' });
-    }
+  // Reports - Check report permissions
+  if (hasPerm(PERMISSIONS.REPORTS_VIEW) || hasPerm(PERMISSIONS.REPORTS_GENERATE)) {
+    baseItems.push({ name: 'Reports', href: '/reports', icon: 'bar-chart' });
+  }
 
-    // Organization Module - Check all organization permissions
-    const canAccessOrganization =
-      hasPerm(PERMISSIONS.DEPARTMENT_MANAGE) ||
-      hasPerm(PERMISSIONS.DEPARTMENT_VIEW) ||
-      hasPerm(PERMISSIONS.POSITION_MANAGE) ||
-      hasPerm(PERMISSIONS.POSITION_VIEW) ||
-      hasPerm(PERMISSIONS.GRADE_MANAGE) ||
-      hasPerm(PERMISSIONS.GRADE_VIEW) ||
-      hasPerm(PERMISSIONS.SYSTEM_FULL_ACCESS) ||
-      hasPerm(PERMISSIONS.EMPLOYEES_MANAGE_ALL) || // HR Admins and above can access organization
-      hasPerm(PERMISSIONS.TEAM_MANAGE) || // Managers and above
-      hasPerm(PERMISSIONS.DIRECT_REPORTS_MANAGE); // Supervisors
+  // Organization Module - Check all organization permissions
+  const canAccessOrganization =
+    hasPerm(PERMISSIONS.DEPARTMENT_MANAGE) ||
+    hasPerm(PERMISSIONS.DEPARTMENT_VIEW) ||
+    hasPerm(PERMISSIONS.POSITION_MANAGE) ||
+    hasPerm(PERMISSIONS.POSITION_VIEW) ||
+    hasPerm(PERMISSIONS.GRADE_MANAGE) ||
+    hasPerm(PERMISSIONS.GRADE_VIEW) ||
+    hasPerm(PERMISSIONS.SYSTEM_FULL_ACCESS) ||
+    hasPerm(PERMISSIONS.EMPLOYEES_MANAGE_ALL) || // HR Admins and above can access organization
+    hasPerm(PERMISSIONS.TEAM_MANAGE) || // Managers and above
+    hasPerm(PERMISSIONS.DIRECT_REPORTS_MANAGE); // Supervisors
 
-    if (canAccessOrganization) {
-      baseItems.push({
-        name: 'Organization',
-        href: '/organization/departments',
-        icon: 'building',
-        badge: user?.role?.includes('admin') ? 'Admin' : undefined,
-      });
-    }
-
-    // Approvals - Check all approval permissions
-    // const hasApprovalPermission =
-    //   hasPerm(PERMISSIONS.APPROVALS_DEPARTMENT) ||
-    //   hasPerm(PERMISSIONS.APPROVALS_TEAM) ||
-    //   hasPerm(PERMISSIONS.APPROVALS_DIRECT_REPORTS) ||
-    //   hasPerm(PERMISSIONS.LOANS_APPROVE) ||
-    //   hasPerm(PERMISSIONS.TRAVEL_APPROVE) ||
-    //   hasPerm(PERMISSIONS.OVERTIME_APPROVE)
-
-    // if (hasApprovalPermission) {
-    //   const approvalBadge = user?.pendingApprovals ? user.pendingApprovals.toString() : undefined
-    //   baseItems.push({
-    //     name: 'Approvals',
-    //     href: '/workflows/approvals',
-    //     icon: 'check-circle',
-    //     badge: approvalBadge
-    //   })
-    // }
-
-    // Admin Dashboard - Check admin permissions
-    const hasAdminPermission =
-      hasPerm(PERMISSIONS.SYSTEM_FULL_ACCESS) ||
-      hasPerm(PERMISSIONS.USERS_MANAGE_ALL) ||
-      hasPerm(PERMISSIONS.USERS_MANAGE_SUPER_ADMINS) ||
-      hasPerm(PERMISSIONS.ROLES_MANAGE_ALL) ||
-      hasPerm(PERMISSIONS.USERS_MANAGE_PERMISSIONS) ||
-      hasPerm(PERMISSIONS.AUDIT_LOGS_VIEW) ||
-      hasPerm(PERMISSIONS.SETTINGS_MANAGE);
-
-    if (hasAdminPermission) {
-      baseItems.push({
-        name: 'Admin',
-        href: '/admin/dashboard',
-        icon: 'shield',
-        badge: 'Admin',
-      });
-    }
-
-    // Help & Support - Available to all authenticated users
+  if (canAccessOrganization) {
     baseItems.push({
-      name: 'Help & Support',
-      href: '/help-support',
-      icon: 'help-circle',
+      name: 'Organization',
+      href: '/organization/departments',
+      icon: 'building',
+      badge: user?.role?.includes('admin') ? 'Admin' : undefined,
     });
+  }
 
-    return baseItems;
-  }, [user, hasPerm]);
+  // ============ WORKFLOWS SECTION - UPDATED ============
+  
+  // Workflows - Show if user can create requests or has any approval permissions
+  const canAccessWorkflows =
+    hasPerm(PERMISSIONS.REQUESTS_CREATE) || // Can create requests
+    hasPerm(PERMISSIONS.APPROVALS_DIRECT_REPORTS) || // Can approve direct reports
+    hasPerm(PERMISSIONS.APPROVALS_TEAM) || // Can approve team
+    hasPerm(PERMISSIONS.APPROVALS_DEPARTMENT) || // Can approve department
+    hasPerm(PERMISSIONS.SYSTEM_FULL_ACCESS); // Is super admin
+
+  if (canAccessWorkflows) {
+    baseItems.push({ 
+      name: 'Workflows', 
+      href: '/workflows', 
+      icon: 'workflow' 
+    });
+  }
+
+  // Approvals - Show if user has any approval permissions
+  const canAccessApprovals = 
+    hasPerm(PERMISSIONS.APPROVALS_DIRECT_REPORTS) || 
+    hasPerm(PERMISSIONS.APPROVALS_TEAM) ||
+    hasPerm(PERMISSIONS.APPROVALS_DEPARTMENT) ||
+    hasPerm(PERMISSIONS.SYSTEM_FULL_ACCESS);
+
+  if (canAccessApprovals) {
+    // Get pending approvals count (you'll need to fetch this)
+    const pendingCount = 0; 
+    baseItems.push({
+      name: 'Approvals',
+      href: '/workflows/approvals',
+      icon: 'check-circle',
+      badge: pendingCount > 0 ? pendingCount.toString() : undefined,
+    });
+  }
+
+  // =====================================================
+
+  // Admin Dashboard - Check admin permissions
+  const hasAdminPermission =
+    hasPerm(PERMISSIONS.SYSTEM_FULL_ACCESS) ||
+    hasPerm(PERMISSIONS.USERS_MANAGE_ALL) ||
+    hasPerm(PERMISSIONS.USERS_MANAGE_SUPER_ADMINS) ||
+    hasPerm(PERMISSIONS.ROLES_MANAGE_ALL) ||
+    hasPerm(PERMISSIONS.USERS_MANAGE_PERMISSIONS) ||
+    hasPerm(PERMISSIONS.AUDIT_LOGS_VIEW) ||
+    hasPerm(PERMISSIONS.SETTINGS_MANAGE);
+
+  if (hasAdminPermission) {
+    baseItems.push({
+      name: 'Admin',
+      href: '/admin/dashboard',
+      icon: 'shield',
+      badge: 'Admin',
+    });
+  }
+
+  // Help & Support - Available to all authenticated users
+  baseItems.push({
+    name: 'Help & Support',
+    href: '/help-support',
+    icon: 'help-circle',
+  });
+
+  return baseItems;
+}, [user, hasPerm]);
 
   // Get organization sub-navigation items
-  // Add this function to your useAuth hook:
   const getOrganizationSubItems = useCallback(() => {
     if (!user) return [];
 
-    const subItems: Array<{ name: string; href: string; permission: string }> = [];
+    const subItems: Array<{
+      [x: string]: string; name: string; href: string; permission: string 
+}> = [];
 
     // Departments
     if (
@@ -310,6 +330,7 @@ export function useAuth() {
 
     return subItems;
   }, [user, hasPerm]);
+
   // Get create actions for organization module
   const getOrganizationCreateActions = useCallback(() => {
     if (!user) return [];
@@ -564,6 +585,25 @@ export function useAuth() {
     );
   }, [hasPerm]);
 
+  // Workflow access checks
+  const canAccessWorkflows = useCallback(() => {
+    return (
+      hasPerm(PERMISSIONS.WORKFLOW_INSTANCES_VIEW_ALL) ||
+      hasPerm(PERMISSIONS.WORKFLOW_INSTANCES_VIEW_DEPARTMENT) ||
+      hasPerm(PERMISSIONS.WORKFLOW_INSTANCES_VIEW_TEAM) ||
+      hasPerm(PERMISSIONS.WORKFLOW_INSTANCES_APPROVE) ||
+      hasPerm(PERMISSIONS.WORKFLOW_DEFINITIONS_VIEW)
+    );
+  }, [hasPerm]);
+
+  const canAccessWorkflowApprovals = useCallback(() => {
+    return hasPerm(PERMISSIONS.WORKFLOW_INSTANCES_APPROVE);
+  }, [hasPerm]);
+
+  const canAccessWorkflowDefinitions = useCallback(() => {
+    return hasPerm(PERMISSIONS.WORKFLOW_DEFINITIONS_VIEW);
+  }, [hasPerm]);
+
   // Token refresh
   const refreshToken = useCallback(async () => {
     try {
@@ -638,6 +678,9 @@ export function useAuth() {
     canAccessPayroll,
     canAccessReports,
     canAccessAdmin,
+    canAccessWorkflows,
+    canAccessWorkflowApprovals,
+    canAccessWorkflowDefinitions,
 
     // Token check
     isTokenExpired: () => {

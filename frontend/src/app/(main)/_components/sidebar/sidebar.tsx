@@ -4,13 +4,15 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, LogOut, Sparkles, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/auth/use-auth';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import Image from 'next/image';
 
-// Icon map with yellow icons
+// Icon map with modern icons
 const iconMap: Record<string, React.ComponentType<any>> = {
   // Dashboard
   home: () => (
@@ -122,7 +124,7 @@ const iconMap: Record<string, React.ComponentType<any>> = {
     </svg>
   ),
 
-  // Payroll - Credit card icon
+  // Payroll
   'dollar-sign': () => (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -140,7 +142,7 @@ const iconMap: Record<string, React.ComponentType<any>> = {
     </svg>
   ),
 
-  // Reports - Bar chart icon
+  // Reports
   'bar-chart': () => (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -159,7 +161,7 @@ const iconMap: Record<string, React.ComponentType<any>> = {
     </svg>
   ),
 
-  // Organization - Building icon
+  // Organization
   building: () => (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -186,7 +188,7 @@ const iconMap: Record<string, React.ComponentType<any>> = {
     </svg>
   ),
 
-  // Approvals - Check circle icon
+  // Approvals
   'check-circle': () => (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -204,7 +206,7 @@ const iconMap: Record<string, React.ComponentType<any>> = {
     </svg>
   ),
 
-  // Admin - Shield icon
+  // Admin
   shield: () => (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -221,7 +223,7 @@ const iconMap: Record<string, React.ComponentType<any>> = {
     </svg>
   ),
 
-  // Help & Support - Help circle icon
+  // Help
   'help-circle': () => (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -236,52 +238,85 @@ const iconMap: Record<string, React.ComponentType<any>> = {
     >
       <circle cx="12" cy="12" r="10" />
       <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-      <line x1="12" y1="17" x2="12.01" y2="17" />
+      <path d="M12 17h.01" />
     </svg>
   ),
 
-  // Settings - Gear icon
+  'file-text': () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="16" y1="13" x2="8" y2="13"/>
+      <line x1="16" y1="17" x2="8" y2="17"/>
+      <line x1="10" y1="9" x2="8" y2="9"/>
+    </svg>
+  ),
+
   settings: () => (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
       <circle cx="12" cy="12" r="3" />
     </svg>
   ),
 
-  // Logout icon
-  'log-out': () => (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-      <polyline points="16 17 21 12 16 7" />
-      <line x1="21" y1="12" x2="9" y2="12" />
+  workflow: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect width="8" height="8" x="3" y="3" rx="2" />
+      <rect width="8" height="8" x="13" y="3" rx="2" />
+      <rect width="8" height="8" x="13" y="13" rx="2" />
+      <rect width="8" height="8" x="3" y="13" rx="2" />
+    </svg>
+  ),
+
+  list: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="8" y1="6" x2="21" y2="6" />
+      <line x1="8" y1="12" x2="21" y2="12" />
+      <line x1="8" y1="18" x2="21" y2="18" />
+      <line x1="3" y1="6" x2="3.01" y2="6" />
+      <line x1="3" y1="12" x2="3.01" y2="12" />
+      <line x1="3" y1="18" x2="3.01" y2="18" />
+    </svg>
+  ),
+
+  history: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+      <path d="M3 3v5h5" />
+      <path d="M12 7v5l4 2" />
+    </svg>
+  ),
+
+  plus: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
     </svg>
   ),
 };
 
-export function Sidebar() {
+export function Sidebar({ onToggle }: { onToggle?: (collapsed: boolean) => void }) {
   const pathname = usePathname();
-  const { user, logout, getNavigationItems, getOrganizationSubItems } = useAuth();
+  const { 
+    user, 
+    logout, 
+    getNavigationItems, 
+    getOrganizationSubItems,
+    canAccessWorkflowDefinitions,
+    canAccessWorkflowApprovals 
+  } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
+  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({
+    organization: pathname.startsWith('/organization'),
+    workflows: pathname.startsWith('/workflows'),
+  });
+
+  // Notify parent when collapsed state changes
+  const handleToggle = () => {
+    const newCollapsed = !collapsed;
+    setCollapsed(newCollapsed);
+    onToggle?.(newCollapsed);
+  };
 
   if (!user) {
     return null;
@@ -293,8 +328,45 @@ export function Sidebar() {
   const organizationSubItems = getOrganizationSubItems();
   const hasOrganizationAccess = organizationSubItems.length > 0;
 
-  // Check if current page is in organization module
-  const isInOrganizationModule = pathname.startsWith('/organization');
+  // Get workflow sub-items based on permissions
+  const workflowSubItems: { name: string; href: string; icon: string; }[] = [];
+  
+  if (canAccessWorkflowApprovals()) {
+    workflowSubItems.push({
+      name: 'Pending Approvals',
+      href: '/workflows/approvals',
+      icon: 'check-circle',
+    });
+  }
+  
+  if (canAccessWorkflowDefinitions()) {
+    workflowSubItems.push({
+      name: 'Definitions',
+      href: '/workflows/configurations/definitions',
+      icon: 'file-text',
+    });
+    workflowSubItems.push({
+      name: 'Create Definition',
+      href: '/workflows/configurations/definitions/create',
+      icon: 'plus',
+    });
+  }
+  
+  // Always show these for users with workflow access
+  workflowSubItems.push(
+    {
+      name: 'My Workflows',
+      href: '/workflows/my-workflows',
+      icon: 'history',
+    },
+    {
+      name: 'Team Workflows',
+      href: '/workflows/team-workflows',
+      icon: 'users',
+    }
+  );
+
+  const hasWorkflowAccess = workflowSubItems.length > 0;
 
   // Add settings and help items if not already included
   const secondaryItems = [
@@ -306,109 +378,210 @@ export function Sidebar() {
       : [{ name: 'Help & Support', href: '/help-support', icon: 'help-circle' }]),
   ];
 
+  const toggleExpanded = (itemName: string) => {
+    setExpandedItems(prev => ({
+      ...prev,
+      [itemName]: !prev[itemName]
+    }));
+  };
+
+  // Check if item should be expanded by default
+  const getDefaultExpanded = (itemName: string, baseHref: string) => {
+    if (expandedItems[itemName] !== undefined) {
+      return expandedItems[itemName];
+    }
+    return pathname.startsWith(baseHref);
+  };
+
   return (
-    <aside
-      className={cn(
-        'fixed inset-y-0 left-0 z-50 flex flex-col transition-all duration-300 ease-in-out',
-        collapsed ? 'w-16' : 'w-64'
-      )}
-    >
-      {/* Sidebar Header - White background with full logo image */}
-      <div
+    <TooltipProvider>
+      <aside
         className={cn(
-          'h-16 bg-white border-b border-gray-200 flex items-center',
-          collapsed ? 'justify-center px-2' : 'justify-between px-4'
+          'fixed inset-y-0 left-0 z-50 flex flex-col transition-all duration-300 ease-in-out',
+          collapsed ? 'w-20' : 'w-72'
         )}
       >
-        <div className={cn('flex items-center justify-center', collapsed ? 'w-full' : 'flex-1')}>
-          <div className="relative h-10 w-full flex items-center justify-center">
-            {collapsed ? (
-              // Compact logo for collapsed state
-              <div className="h-8 w-8 flex items-center justify-center">
-                <div className="h-6 w-6 bg-requesta-primary rounded flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">R</span>
+        {/* Sidebar Header - White background with logo */}
+        <div
+          className={cn(
+            'h-20 bg-white border-b border-gray-200 flex items-center',
+            collapsed ? 'justify-center px-2' : 'justify-between px-4'
+          )}
+        >
+          <div className={cn('flex items-center justify-center', collapsed ? 'w-full' : 'flex-1')}>
+            <div className="relative h-10 w-full flex items-center justify-center">
+              {collapsed ? (
+                // Compact logo for collapsed state
+                <div className="relative">
+                  <div className="absolute inset-0 bg-yellow-400 blur-lg opacity-50 rounded-xl"></div>
+                  <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-yellow-400 to-yellow-500 shadow-lg">
+                    <span className="text-xl font-bold text-requesta-primary">R</span>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              // Full logo image for expanded state
-              <div className="h-140 w-full flex items-center justify-center">
-                <Image
-                  src="/images/logo2.png"
-                  alt="Requesta Logo"
-                  width={280}
-                  height={140}
-                  className="object-contain max-h-140"
-                  priority
-                />
-              </div>
-            )}
+              ) : (
+                // Full logo image for expanded state
+                <div className="h-80 w-full flex items-center justify-center">
+                  <Image
+                    src="/images/logo2.png"
+                    alt="Requesta Logo"
+                    width={180}
+                    height={80}
+                    className="object-contain max-h-100"
+                    priority
+                  />
+                </div>
+              )}
+            </div>
           </div>
+
+          {!collapsed && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 hover:bg-gray-100 rounded-lg"
+              onClick={handleToggle}
+            >
+              <ChevronLeft className="h-4 w-4 text-gray-600" />
+            </Button>
+          )}
         </div>
 
-        {!collapsed && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 hover:bg-gray-100"
-            onClick={() => setCollapsed(!collapsed)}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
+        {/* Main Sidebar Body */}
+        <div className="flex-1 bg-gradient-to-br from-requesta-primary via-requesta-primary to-requesta-primary-dark border-r border-white/10 backdrop-blur-xl overflow-y-auto">
+          {/* User Profile Section */}
+          {/* {!collapsed && (
+            <div className="px-4 py-4 border-b border-white/10">
+              <div className="flex items-center space-x-3 rounded-xl bg-white/5 p-3 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all cursor-pointer group">
+                <div className="relative">
+                  <Avatar className="h-10 w-10 border-2 border-yellow-400/50 ring-2 ring-yellow-400/20">
+                    <AvatarImage src={user?.avatar} />
+                    <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-yellow-500 text-requesta-primary font-semibold">
+                      {user?.username?.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-requesta-primary bg-green-400 shadow-sm"></span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-white truncate">{user?.username}</p>
+                  <p className="text-xs text-white/60 truncate">{user?.email}</p>
+                </div>
+                <Sparkles className="h-4 w-4 text-yellow-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+            </div>
+          )} */}
 
-      {/* Main Sidebar Body - Primary Color */}
-      <div className="flex-1 bg-requesta-primary overflow-y-auto">
-        {/* Navigation Items */}
-        <nav className="py-4">
-          <div className="space-y-1 px-2">
+          {/* Navigation */}
+          <nav className="py-4 px-3 space-y-1">
             {navigationItems.map((item) => {
               const Icon = iconMap[item.icon] || iconMap['home'];
               const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
               const isOrganizationItem = item.name === 'Organization';
+              const isWorkflowsItem = item.name === 'Workflows';
+              
+              // Get sub-items for each expandable item
+              let subItems: Array<{ name: string; href: string; icon: string }> = [];
+              let hasSubItems = false;
+              
+              if (isOrganizationItem && hasOrganizationAccess) {
+                subItems = organizationSubItems.map(subItem => ({
+                  ...subItem,
+                  icon: subItem.icon || 'building'
+                }));
+                hasSubItems = true;
+              }
+              
+              if (isWorkflowsItem && hasWorkflowAccess) {
+                subItems = workflowSubItems;
+                hasSubItems = true;
+              }
+              
+              const isExpanded = !collapsed && getDefaultExpanded(item.name.toLowerCase(), item.href);
 
               return (
-                <div key={item.name} className="relative">
-                  <Link
-                    href={item.href}
-                    className={cn(
-                      'group flex items-center rounded-lg px-3 py-3 text-sm font-medium transition-colors relative',
-                      isActive
-                        ? 'bg-emerald-500/20 text-white' // Green shade for active
-                        : 'text-white/90 hover:bg-white/10 hover:text-white',
-                      collapsed && 'justify-center'
-                    )}
-                  >
-                    <Icon
-                      className={cn(
-                        'h-5 w-5 flex-shrink-0',
-                        isActive
-                          ? 'text-yellow-500' // Yellow for active icons
-                          : 'text-yellow-500/90 group-hover:text-yellow-400', // Yellow-500 for normal
-                        !collapsed && 'mr-3'
-                      )}
-                    />
-                    {!collapsed && (
-                      <div className="flex items-center justify-between w-full">
-                        <span>{item.name}</span>
-                        {item.badge && (
-                          <Badge className="text-xs bg-yellow-500 text-gray-900 font-semibold">
-                            {item.badge}
-                          </Badge>
+                <div key={item.name}>
+                  <Tooltip delayDuration={0}>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center">
+                        <Link
+                          href={item.href}
+                          className={cn(
+                            'group relative flex items-center flex-1 rounded-xl px-3 py-3 text-sm font-medium transition-all duration-200',
+                            isActive
+                              ? 'bg-white/10 text-white shadow-lg shadow-yellow-500/10'
+                              : 'text-white/70 hover:bg-white/5 hover:text-white',
+                            collapsed && 'justify-center'
+                          )}
+                        >
+                          {/* Active indicator */}
+                          {isActive && !collapsed && (
+                            <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 rounded-r-full bg-gradient-to-b from-yellow-400 to-yellow-500"></div>
+                          )}
+                          
+                          {/* Icon with gradient background on active */}
+                          <div className={cn(
+                            'flex items-center justify-center rounded-lg p-1.5 transition-all',
+                            isActive ? 'bg-yellow-400/20' : 'group-hover:bg-white/5',
+                            !collapsed && 'mr-3'
+                          )}>
+                            <Icon
+                              className={cn(
+                                'h-5 w-5 transition-all',
+                                isActive ? 'text-yellow-400' : 'text-white/70 group-hover:text-white'
+                              )}
+                            />
+                          </div>
+                          
+                          {!collapsed && (
+                            <div className="flex items-center justify-between flex-1">
+                              <span className="truncate">{item.name}</span>
+                              {item.badge && (
+                                <Badge className="ml-2 h-5 px-2 bg-yellow-400 text-requesta-primary text-xs font-bold border-0 shadow-sm">
+                                  {item.badge}
+                                </Badge>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Collapsed badge indicator */}
+                          {collapsed && item.badge && (
+                            <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-yellow-400 flex items-center justify-center">
+                              <span className="text-[10px] font-bold text-requesta-primary">{item.badge}</span>
+                            </div>
+                          )}
+                        </Link>
+                        
+                        {!collapsed && hasSubItems && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10 rounded-lg ml-1"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              toggleExpanded(item.name.toLowerCase());
+                            }}
+                          >
+                            {isExpanded ? (
+                              <ChevronUp className="h-4 w-4" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4" />
+                            )}
+                          </Button>
                         )}
                       </div>
-                    )}
+                    </TooltipTrigger>
                     {collapsed && (
-                      <div className="absolute left-full ml-2 hidden rounded-md bg-gray-900 px-2 py-1 text-xs text-white group-hover:block z-50">
-                        {item.name}
-                      </div>
+                      <TooltipContent side="right" className="bg-gray-900 text-white border-white/20">
+                        <p>{item.name}</p>
+                      </TooltipContent>
                     )}
-                  </Link>
+                  </Tooltip>
 
-                  {/* Organization Sub-menu */}
-                  {isOrganizationItem && hasOrganizationAccess && !collapsed && isInOrganizationModule && (
-                    <div className="ml-8 mt-1 space-y-1 border-l-2 border-emerald-500/20 pl-3">
-                      {organizationSubItems.map((subItem) => {
+                  {/* Sub-menu for expandable items */}
+                  {hasSubItems && !collapsed && isExpanded && (
+                    <div className="ml-8 mt-1 space-y-1 border-l-2 border-yellow-500/20 pl-3">
+                      {subItems.map((subItem) => {
+                        const SubIcon = iconMap[subItem.icon] || iconMap['file-text'];
                         const isSubActive = pathname === subItem.href || pathname.startsWith(`${subItem.href}/`);
                         
                         return (
@@ -418,11 +591,19 @@ export function Sidebar() {
                             className={cn(
                               'group flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                               isSubActive
-                                ? 'bg-emerald-500/10 text-yellow-400' // Lighter green for active sub-item
+                                ? 'bg-yellow-500/10 text-yellow-400'
                                 : 'text-white/70 hover:bg-white/5 hover:text-white'
                             )}
                           >
-                            <span className="ml-1">{subItem.name}</span>
+                            <SubIcon
+                              className={cn(
+                                'h-4 w-4 flex-shrink-0 mr-2',
+                                isSubActive
+                                  ? 'text-yellow-400'
+                                  : 'text-yellow-500/70'
+                              )}
+                            />
+                            <span>{subItem.name}</span>
                           </Link>
                         );
                       })}
@@ -431,103 +612,101 @@ export function Sidebar() {
                 </div>
               );
             })}
-          </div>
 
-          {/* Divider - Only show if there are secondary items */}
-          {secondaryItems.length > 0 && (
-            <>
-              <div className="my-4 px-3">
-                <div className="h-px bg-white/20"></div>
+            {/* Divider */}
+            {secondaryItems.length > 0 && (
+              <div className="py-3">
+                <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
               </div>
+            )}
 
-              {/* Secondary Navigation */}
-              <div className="space-y-1 px-2">
-                {secondaryItems.map((item) => {
-                  const Icon = iconMap[item.icon] || iconMap['home'];
-                  const isActive = pathname === item.href;
+            {/* Secondary Items */}
+            {secondaryItems.map((item) => {
+              const Icon = iconMap[item.icon] || iconMap['home'];
+              const isActive = pathname === item.href;
 
-                  return (
+              return (
+                <Tooltip key={item.name} delayDuration={0}>
+                  <TooltipTrigger asChild>
                     <Link
-                      key={item.name}
                       href={item.href}
                       className={cn(
-                        'group flex items-center rounded-lg px-3 py-3 text-sm font-medium transition-colors relative',
+                        'group relative flex items-center rounded-xl px-3 py-3 text-sm font-medium transition-all duration-200',
                         isActive
-                          ? 'bg-emerald-500/20 text-white' // Green shade for active
-                          : 'text-white/90 hover:bg-white/10 hover:text-white',
+                          ? 'bg-white/10 text-white shadow-lg'
+                          : 'text-white/70 hover:bg-white/5 hover:text-white',
                         collapsed && 'justify-center'
                       )}
                     >
-                      <Icon
-                        className={cn(
-                          'h-5 w-5 flex-shrink-0',
-                          isActive
-                            ? 'text-yellow-500' // Yellow for active icons
-                            : 'text-yellow-500/90 group-hover:text-yellow-400', // Yellow-500 for normal
-                          !collapsed && 'mr-3'
-                        )}
-                      />
-                      {!collapsed && <span>{item.name}</span>}
-                      {collapsed && (
-                        <div className="absolute left-full ml-2 hidden rounded-md bg-gray-900 px-2 py-1 text-xs text-white group-hover:block z-50">
-                          {item.name}
-                        </div>
-                      )}
+                      <div className={cn(
+                        'flex items-center justify-center rounded-lg p-1.5 transition-all',
+                        isActive ? 'bg-yellow-400/20' : 'group-hover:bg-white/5',
+                        !collapsed && 'mr-3'
+                      )}>
+                        <Icon
+                          className={cn(
+                            'h-5 w-5 transition-all',
+                            isActive ? 'text-yellow-400' : 'text-white/70 group-hover:text-white'
+                          )}
+                        />
+                      </div>
+                      {!collapsed && <span className="truncate">{item.name}</span>}
                     </Link>
-                  );
-                })}
-              </div>
-            </>
-          )}
-        </nav>
-      </div>
-
-      {/* Collapsed Sidebar Toggle Button */}
-      {collapsed && (
-        <div className="p-2 bg-requesta-primary border-t border-requesta-primary-light">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 hover:bg-white/10 text-yellow-500"
-            onClick={() => setCollapsed(!collapsed)}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+                  </TooltipTrigger>
+                  {collapsed && (
+                    <TooltipContent side="right" className="bg-gray-900 text-white border-white/20">
+                      <p>{item.name}</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              );
+            })}
+          </nav>
         </div>
-      )}
 
-      {/* Logout Button */}
-      <div className="bg-requesta-primary border-t border-requesta-primary-light p-4">
-        <Button
-          variant="ghost"
-          className={cn(
-            'w-full justify-start text-white hover:bg-white/10',
-            collapsed && 'justify-center'
-          )}
-          onClick={logout}
-        >
-          <div className={cn('flex items-center', collapsed ? 'justify-center' : 'space-x-3')}>
-            <div className="h-5 w-5 flex items-center justify-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                <polyline points="16 17 21 12 16 7" />
-                <line x1="21" y1="12" x2="9" y2="12" />
-              </svg>
-            </div>
-            {!collapsed && <span>Logout</span>}
+        {/* Collapsed Sidebar Toggle Button */}
+        {collapsed && (
+          <div className="p-2 bg-requesta-primary border-t border-white/10">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 hover:bg-white/10 text-yellow-500 rounded-lg mx-auto"
+              onClick={handleToggle}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
-        </Button>
-      </div>
-    </aside>
+        )}
+
+        {/* Logout Button */}
+        <div className="p-3 border-t border-white/10 bg-requesta-primary">
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                onClick={logout}
+                className={cn(
+                  'w-full rounded-xl text-white/80 hover:text-white hover:bg-red-500/20 transition-all group',
+                  collapsed ? 'justify-center px-0' : 'justify-start'
+                )}
+              >
+                <div className={cn(
+                  'flex items-center justify-center rounded-lg p-1.5 group-hover:bg-red-500/10',
+                  !collapsed && 'mr-3'
+                )}>
+                  <LogOut className="h-5 w-5 group-hover:text-red-400" />
+                </div>
+                {!collapsed && <span>Logout</span>}
+              </Button>
+            </TooltipTrigger>
+            {collapsed && (
+              <TooltipContent side="right" className="bg-gray-900 text-white border-white/20">
+                <p>Logout</p>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </div>
+      </aside>
+    </TooltipProvider>
   );
 }

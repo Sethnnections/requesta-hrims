@@ -5,6 +5,9 @@ import { useAuthStore } from '@/store/slices/auth-slice'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Briefcase, Users, FileText, BarChart, ArrowUpRight, Clock, Banknote, Plane } from 'lucide-react'
+import { useAuth } from '@/hooks/auth/use-auth';
+import { PERMISSIONS } from '@/lib/permissions';
+
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -205,6 +208,39 @@ export default function DashboardPage() {
           </div>
         </CardContent>
       </Card>
+      {/* <DebugPermissions /> */}
     </div>
   )
+}
+
+
+
+export function DebugPermissions() {
+  const { user, hasPermission } = useAuth();
+  
+  return (
+    <div className="p-4 bg-gray-100 rounded-lg">
+      <h2 className="text-lg font-bold mb-2">User Permissions Debug</h2>
+      <p>User Role: {user?.role}</p>
+      <p>User Permissions: {user?.permissions?.join(', ')}</p>
+      
+      <div className="mt-4">
+        <h3 className="font-semibold">Workflow Permission Checks:</h3>
+        <ul className="space-y-1">
+          <li>WORKFLOW_INSTANCES_CREATE: {hasPermission('workflow:instances_create') ? '✓' : '✗'}</li>
+          <li>WORKFLOW_INSTANCES_VIEW_ALL: {hasPermission('workflow:instances_view_all') ? '✓' : '✗'}</li>
+          <li>WORKFLOW_INSTANCES_VIEW_TEAM: {hasPermission('workflow:instances_view_team') ? '✓' : '✗'}</li>
+          <li>WORKFLOW_INSTANCES_APPROVE: {hasPermission('workflow:instances_approve') ? '✓' : '✗'}</li>
+          <li>WORKFLOW_DEFINITIONS_VIEW: {hasPermission('workflow:definitions_view') ? '✓' : '✗'}</li>
+        </ul>
+      </div>
+      
+      <div className="mt-4">
+        <h3 className="font-semibold">Available Permissions in PERMISSIONS object:</h3>
+        <pre className="text-xs bg-white p-2 rounded overflow-auto">
+          {JSON.stringify(PERMISSIONS, null, 2)}
+        </pre>
+      </div>
+    </div>
+  );
 }

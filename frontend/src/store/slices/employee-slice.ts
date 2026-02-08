@@ -266,25 +266,21 @@ export const useEmployeeStore = create<EmployeeState>((set, get) => ({
 },
 
 fetchPositionsByDepartment: async (departmentId: string) => {
-  set({ isLoading: true, error: null })
+  set({ isLoading: true, error: null });
   
   try {
-    const response = await employeeService.getPositions({
-      departmentId,
-      isActive: true,
-    })
-    
+    const positions = await employeeService.getPositionsByDepartment(departmentId);
     set({ 
-      positions: response.data, 
+      positions: positions, 
       isLoading: false 
-    })
+    });
   } catch (error: any) {
     set({ 
       error: error.message, 
       isLoading: false,
       positions: [] 
-    })
-    throw error
+    });
+    throw error;
   }
 },
 
@@ -304,7 +300,7 @@ fetchPositions: async (params = {}) => {
   set({ isLoading: true, error: null })
   
   try {
-    // Remove hasVacancies: true from default params
+    // Remove the default hasVacancies: true
     const response = await employeeService.getPositions({
       ...params,
       isActive: true,
