@@ -2,11 +2,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useWorkflowStore } from '@/store/slices/workflow-slice';
 import { useAuth } from '@/hooks/auth/use-auth';
 import { PERMISSIONS } from '@/lib/permissions';
-import { WorkflowType, ApprovalRule, CreateWorkflowDefinitionData, WorkflowStage } from '@/types/workflow';
+import { WorkflowType, ApprovalRule, UpdateWorkflowDefinitionData, WorkflowStage } from '@/types/workflow';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,25 +28,28 @@ const DEFAULT_RULE_CONFIGS = {
   [ApprovalRule.ANY_MANAGER]: { managerLevel: 'any' },
 };
 
-export default function CreateWorkflowDefinitionPage() {
+export default function EditWorkflowDefinitionPage() {
+  const { id } = useParams();
   const router = useRouter();
   const { hasPermission } = useAuth();
   const {
-    createWorkflowDefinition,
+    currentWorkflowDefinition,
+    getWorkflowDefinitionById,
+    updateWorkflowDefinition,
     getAvailableWorkflowTypes,
     availableWorkflowTypes,
     isLoading,
     error,
   } = useWorkflowStore();
   
-  const [formData, setFormData] = useState<CreateWorkflowDefinitionData>({
+  const [formData, setFormData] = useState<UpdateWorkflowDefinitionData>({
     name: '',
     workflowType: WorkflowType.LEAVE_REQUEST,
     department: '',
     description: '',
     stages: [
       {
-        stage: 1, // CHANGED: Start from 1 instead of 0
+        stage: 0,
         name: 'Initial Approval',
         approvalRule: ApprovalRule.SUPERVISOR,
         ruleConfig: DEFAULT_RULE_CONFIGS[ApprovalRule.SUPERVISOR],
@@ -56,10 +59,24 @@ export default function CreateWorkflowDefinitionPage() {
   });
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [isLoadingPage, setIsLoadingPage] = useState(true);
 
   useEffect(() => {
-    loadWorkflowTypes();
-  }, []);
+    if (id) {
+      loadDefinition();
+      loadWorkflowTypes();
+    }
+  }, [id]);
+
+  const loadDefinition = async () => {
+    try {
+      await getWorkflowDefinitionById(id as string);
+    } catch (error) {
+      console.error('Failed to load definition:', error);
+    } finally {
+      setIsLoadingPage(false);
+    }
+  };
 
   const loadWorkflowTypes = async () => {
     try {
@@ -69,10 +86,30 @@ export default function CreateWorkflowDefinitionPage() {
     }
   };
 
+  useEffect(() => {
+    if (currentWorkflowDefinition) {
+      setFormData({
+        name: currentWorkflowDefinition.name || '',
+        workflowType: currentWorkflowDefinition.workflowType || WorkflowType.LEAVE_REQUEST,
+        department: currentWorkflowDefinition.department || '',
+        description: currentWorkflowDefinition.description || '',
+        stages: currentWorkflowDefinition.stages || [
+          {
+            stage: 0,
+            name: 'Initial Approval',
+            approvalRule: ApprovalRule.SUPERVISOR,
+            ruleConfig: DEFAULT_RULE_CONFIGS[ApprovalRule.SUPERVISOR],
+          }
+        ],
+        isActive: currentWorkflowDefinition.isActive !== undefined ? currentWorkflowDefinition.isActive : true,
+      });
+    }
+  }, [currentWorkflowDefinition]);
+
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
 
-    if (!formData.name.trim()) {
+    if (!formData.name?.trim()) {
       errors.name = 'Name is required';
     }
 
@@ -83,17 +120,12 @@ export default function CreateWorkflowDefinitionPage() {
     if (!formData.stages || formData.stages.length === 0) {
       errors.stages = 'At least one approval stage is required';
     } else {
-      // Validate sequential stage numbers starting from 1
       formData.stages.forEach((stage, index) => {
         if (!stage.name?.trim()) {
           errors[`stage_${index}_name`] = `Stage ${index + 1} name is required`;
         }
         if (!stage.approvalRule) {
           errors[`stage_${index}_rule`] = `Stage ${index + 1} approval rule is required`;
-        }
-        // Check if stage number is sequential starting from 1
-        if (stage.stage !== index + 1) {
-          errors[`stage_${index}_number`] = `Stage numbers must be sequential (expected ${index + 1}, got ${stage.stage})`;
         }
       });
     }
@@ -109,29 +141,27 @@ export default function CreateWorkflowDefinitionPage() {
       return;
     }
 
-    if (!hasPermission(PERMISSIONS.WORKFLOW_DEFINITIONS_CREATE)) {
-      alert('You do not have permission to create workflow definitions');
+    if (!hasPermission(PERMISSIONS.WORKFLOW_DEFINITIONS_EDIT)) {
+      alert('You do not have permission to edit workflow definitions');
       return;
     }
 
     try {
-      // Prepare the data for API - Ensure sequential stage numbers starting from 1
-      const submissionData = {
+      // Prepare the data for API
+      const submissionData: UpdateWorkflowDefinitionData = {
         ...formData,
-        stages: formData.stages.map((stage, index) => ({
+        stages: formData.stages?.map((stage, index) => ({
           ...stage,
-          stage: index + 1, // CHANGED: Ensure sequential stage numbers starting from 1
+          stage: index, // Ensure sequential stage numbers
         })),
       };
 
-      console.log('Submitting workflow definition:', submissionData); // Debug log
-      
-      await createWorkflowDefinition(submissionData);
-      alert('Workflow definition created successfully!');
+      await updateWorkflowDefinition(id as string, submissionData);
+      alert('Workflow definition updated successfully!');
       router.push('/workflows/configurations/definitions');
     } catch (error: any) {
-      console.error('Failed to create workflow definition:', error);
-      alert(`Failed to create workflow definition: ${error.message || 'Unknown error'}`);
+      console.error('Failed to update workflow definition:', error);
+      alert(`Failed to update workflow definition: ${error.message || 'Unknown error'}`);
     }
   };
 
@@ -139,10 +169,10 @@ export default function CreateWorkflowDefinitionPage() {
     setFormData(prev => ({
       ...prev,
       stages: [
-        ...prev.stages,
+        ...(prev.stages || []),
         {
-          stage: prev.stages.length + 1, // CHANGED: Start from 1, not 0
-          name: `Stage ${prev.stages.length + 1}`,
+          stage: (prev.stages || []).length,
+          name: `Stage ${(prev.stages || []).length + 1}`,
           approvalRule: ApprovalRule.SUPERVISOR,
           ruleConfig: DEFAULT_RULE_CONFIGS[ApprovalRule.SUPERVISOR],
         }
@@ -151,26 +181,24 @@ export default function CreateWorkflowDefinitionPage() {
   };
 
   const removeStage = (index: number) => {
-    if (formData.stages.length <= 1) {
+    if ((formData.stages || []).length <= 1) {
       alert('At least one stage is required');
       return;
     }
 
     setFormData(prev => ({
       ...prev,
-      stages: prev.stages
-        .filter((_, i) => i !== index)
-        .map((stage, i) => ({
-          ...stage,
-          stage: i + 1, // CHANGED: Recalculate stage numbers starting from 1
-        }))
+      stages: (prev.stages || []).filter((_, i) => i !== index).map((stage, i) => ({
+        ...stage,
+        stage: i,
+      }))
     }));
   };
 
   const updateStage = (index: number, field: keyof WorkflowStage, value: any) => {
     setFormData(prev => ({
       ...prev,
-      stages: prev.stages.map((stage, i) => {
+      stages: (prev.stages || []).map((stage, i) => {
         if (i === index) {
           const updatedStage = { ...stage, [field]: value };
           
@@ -186,13 +214,44 @@ export default function CreateWorkflowDefinitionPage() {
     }));
   };
 
-  if (!hasPermission(PERMISSIONS.WORKFLOW_DEFINITIONS_CREATE)) {
+  if (isLoadingPage) {
+    return (
+      <div className="p-8 text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-requesta-primary mx-auto"></div>
+        <p className="mt-2 text-gray-600">Loading workflow definition...</p>
+      </div>
+    );
+  }
+
+  if (!hasPermission(PERMISSIONS.WORKFLOW_DEFINITIONS_EDIT)) {
     return (
       <div className="p-8 text-center">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            You don't have permission to create workflow definitions.
+            You don't have permission to edit workflow definitions.
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="mt-2"
+              onClick={() => router.push('/workflows/configurations/definitions')}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Definitions
+            </Button>
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  if (!currentWorkflowDefinition) {
+    return (
+      <div className="p-8 text-center">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Workflow definition not found.
             <Button 
               variant="outline" 
               size="sm"
@@ -222,8 +281,15 @@ export default function CreateWorkflowDefinitionPage() {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Definitions
           </Button>
-          <h1 className="text-3xl font-bold text-requesta-primary">Create Workflow Definition</h1>
-          <p className="text-gray-600">Design a new approval workflow template</p>
+          <h1 className="text-3xl font-bold text-requesta-primary">
+            Edit Workflow Definition
+          </h1>
+          <p className="text-gray-600">
+            Update workflow: {currentWorkflowDefinition.name}
+            <span className="ml-2 font-mono text-sm text-gray-500">
+              v{currentWorkflowDefinition.version}
+            </span>
+          </p>
         </div>
       </div>
 
@@ -243,7 +309,7 @@ export default function CreateWorkflowDefinitionPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Basic Information</CardTitle>
-                <CardDescription>Define the basic properties of your workflow</CardDescription>
+                <CardDescription>Update the basic properties of your workflow</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
@@ -251,7 +317,7 @@ export default function CreateWorkflowDefinitionPage() {
                   <Input
                     id="name"
                     placeholder="e.g., Leave Request Approval"
-                    value={formData.name}
+                    value={formData.name || ''}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
                     className={formErrors.name ? 'border-red-500' : ''}
                   />
@@ -277,7 +343,6 @@ export default function CreateWorkflowDefinitionPage() {
                           </SelectItem>
                         ))
                       ) : (
-                        // Fallback to enum values if API doesn't return types
                         Object.values(WorkflowType).map((type) => (
                           <SelectItem key={type} value={type}>
                             {type.replace('_', ' ').toLowerCase()
@@ -338,7 +403,7 @@ export default function CreateWorkflowDefinitionPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle>Approval Stages</CardTitle>
-                    <CardDescription>Define the approval sequence for this workflow</CardDescription>
+                    <CardDescription>Update the approval sequence for this workflow</CardDescription>
                   </div>
                   <Button type="button" onClick={addStage} size="sm">
                     <Plus className="h-4 w-4 mr-2" />
@@ -353,7 +418,7 @@ export default function CreateWorkflowDefinitionPage() {
                 )}
               </CardHeader>
               <CardContent>
-                {formData.stages.length === 0 ? (
+                {!formData.stages || formData.stages.length === 0 ? (
                   <div className="text-center py-8 border-2 border-dashed rounded-lg">
                     <p className="text-gray-500">No stages defined. Add your first approval stage.</p>
                   </div>
@@ -364,16 +429,11 @@ export default function CreateWorkflowDefinitionPage() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <div className="h-8 w-8 rounded-full bg-requesta-primary text-white flex items-center justify-center">
-                              {stage.stage} {/* Show actual stage number */}
+                              {index + 1}
                             </div>
-                            <h3 className="font-semibold">Stage {stage.stage}</h3>
-                            {formErrors[`stage_${index}_number`] && (
-                              <span className="text-xs text-red-500 ml-2">
-                                {formErrors[`stage_${index}_number`]}
-                              </span>
-                            )}
+                            <h3 className="font-semibold">Stage {index + 1}</h3>
                           </div>
-                          {formData.stages.length > 1 && (
+                          {(formData.stages || []).length > 1 && (
                             <Button
                               type="button"
                               variant="ghost"
@@ -392,7 +452,7 @@ export default function CreateWorkflowDefinitionPage() {
                             <Input
                               id={`stage-${index}-name`}
                               placeholder="e.g., Supervisor Approval, HR Review"
-                              value={stage.name}
+                              value={stage.name || ''}
                               onChange={(e) => updateStage(index, 'name', e.target.value)}
                               className={formErrors[`stage_${index}_name`] ? 'border-red-500' : ''}
                             />
@@ -435,6 +495,7 @@ export default function CreateWorkflowDefinitionPage() {
                               <Label>Specific Users</Label>
                               <Input
                                 placeholder="Enter user IDs (comma-separated)"
+                                value={Array.isArray(stage.ruleConfig?.userIds) ? stage.ruleConfig.userIds.join(', ') : ''}
                                 onChange={(e) => updateStage(index, 'ruleConfig', {
                                   ...stage.ruleConfig,
                                   userIds: e.target.value.split(',').map(id => id.trim())
@@ -448,6 +509,7 @@ export default function CreateWorkflowDefinitionPage() {
                               <Label>Required Roles</Label>
                               <Input
                                 placeholder="Enter roles (comma-separated)"
+                                value={Array.isArray(stage.ruleConfig?.roles) ? stage.ruleConfig.roles.join(', ') : ''}
                                 onChange={(e) => updateStage(index, 'ruleConfig', {
                                   ...stage.ruleConfig,
                                   roles: e.target.value.split(',').map(role => role.trim())
@@ -500,6 +562,11 @@ export default function CreateWorkflowDefinitionPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
+                  <p className="text-sm font-medium text-gray-600">Current Version</p>
+                  <p className="font-mono">v{currentWorkflowDefinition.version}</p>
+                </div>
+                
+                <div>
                   <p className="text-sm font-medium text-gray-600">Workflow Name</p>
                   <p className="font-medium">{formData.name || 'Not specified'}</p>
                 </div>
@@ -523,7 +590,7 @@ export default function CreateWorkflowDefinitionPage() {
                 
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Stages</p>
-                  <p className="font-medium">{formData.stages.length}</p>
+                  <p className="font-medium">{(formData.stages || []).length}</p>
                 </div>
                 
                 <div>
@@ -549,12 +616,12 @@ export default function CreateWorkflowDefinitionPage() {
                   {isLoading ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Creating...
+                      Updating...
                     </>
                   ) : (
                     <>
                       <Save className="h-4 w-4 mr-2" />
-                      Create Workflow Definition
+                      Update Workflow Definition
                     </>
                   )}
                 </Button>
@@ -573,26 +640,26 @@ export default function CreateWorkflowDefinitionPage() {
                   variant="ghost" 
                   className="w-full"
                   onClick={() => {
-                    // Reset form
+                    // Reset to original data
                     setFormData({
-                      name: '',
-                      workflowType: WorkflowType.LEAVE_REQUEST,
-                      department: '',
-                      description: '',
-                      stages: [
+                      name: currentWorkflowDefinition.name || '',
+                      workflowType: currentWorkflowDefinition.workflowType || WorkflowType.LEAVE_REQUEST,
+                      department: currentWorkflowDefinition.department || '',
+                      description: currentWorkflowDefinition.description || '',
+                      stages: currentWorkflowDefinition.stages || [
                         {
-                          stage: 1, // CHANGED: Start from 1
+                          stage: 0,
                           name: 'Initial Approval',
                           approvalRule: ApprovalRule.SUPERVISOR,
                           ruleConfig: DEFAULT_RULE_CONFIGS[ApprovalRule.SUPERVISOR],
                         }
                       ],
-                      isActive: true,
+                      isActive: currentWorkflowDefinition.isActive !== undefined ? currentWorkflowDefinition.isActive : true,
                     });
                     setFormErrors({});
                   }}
                 >
-                  Reset Form
+                  Reset Changes
                 </Button>
               </CardContent>
             </Card>
@@ -600,14 +667,14 @@ export default function CreateWorkflowDefinitionPage() {
             {/* Help Card */}
             <Card>
               <CardHeader>
-                <CardTitle>Important Notes</CardTitle>
+                <CardTitle>Editing Notes</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 text-sm text-gray-600">
-                <p className="font-medium text-requesta-primary">• Stage numbers must start from 1</p>
-                <p>• Stage numbers must be sequential (1, 2, 3...)</p>
-                <p>• Test approval rules before making active</p>
-                <p>• Consider adding auto-approval for non-critical stages</p>
-                <p>• Department-specific workflows override global ones</p>
+                <p>• Editing creates a new version of the workflow</p>
+                <p>• Existing instances continue with the old version</p>
+                <p>• New instances will use the updated version</p>
+                <p>• Review changes carefully before saving</p>
+                <p>• Test the workflow after making changes</p>
               </CardContent>
             </Card>
           </div>
