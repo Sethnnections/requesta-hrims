@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -10,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Edit, Eye, ToggleLeft, ToggleRight, Trash2, Search, Filter, FileText } from 'lucide-react';
+import { Plus, Edit, Eye, ToggleLeft, ToggleRight, Trash2, Search, Filter, FileText, AlertCircle } from 'lucide-react';
 import { WorkflowType } from '@/types/workflow';
 
 export default function WorkflowDefinitionsPage() {
@@ -23,6 +24,7 @@ export default function WorkflowDefinitionsPage() {
     activateWorkflowDefinition,
     deactivateWorkflowDefinition,
     isLoading,
+    error,
   } = useWorkflowStore();
   
   const [search, setSearch] = useState('');
@@ -38,10 +40,14 @@ export default function WorkflowDefinitionsPage() {
 
   const loadDefinitions = async () => {
     if (hasPermission(PERMISSIONS.WORKFLOW_DEFINITIONS_VIEW)) {
-      await getWorkflowDefinitions({
-        search: search || undefined,
-        isActive: filterActive === 'all' ? undefined : filterActive === 'active',
-      });
+      try {
+        await getWorkflowDefinitions({
+          search: search || undefined,
+          isActive: filterActive === 'all' ? undefined : filterActive === 'active',
+        });
+      } catch (err) {
+        console.error('Failed to load definitions:', err);
+      }
     }
   };
 
@@ -51,6 +57,7 @@ export default function WorkflowDefinitionsPage() {
         await deleteWorkflowDefinition(id);
       } catch (error) {
         console.error('Failed to delete:', error);
+        alert('Failed to delete workflow definition. Please try again.');
       }
     }
   };
@@ -64,6 +71,7 @@ export default function WorkflowDefinitionsPage() {
       }
     } catch (error) {
       console.error('Failed to toggle:', error);
+      alert('Failed to update workflow status. Please try again.');
     }
   };
 
@@ -95,6 +103,24 @@ export default function WorkflowDefinitionsPage() {
           </Button>
         )}
       </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="p-4 border border-red-200 bg-red-50 rounded-md">
+          <div className="flex items-center gap-2 text-red-700">
+            <AlertCircle className="h-4 w-4" />
+            <p className="font-medium">Error: {error}</p>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="mt-2 text-red-600 border-red-200 hover:bg-red-100"
+            onClick={loadDefinitions}
+          >
+            Retry
+          </Button>
+        </div>
+      )}
 
       <Card>
         <CardHeader>
@@ -133,7 +159,7 @@ export default function WorkflowDefinitionsPage() {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-requesta-primary mx-auto"></div>
               <p className="mt-2 text-gray-600">Loading definitions...</p>
             </div>
-          ) : workflowDefinitions.length === 0 ? (
+          ) : !workflowDefinitions || workflowDefinitions.length === 0 ? (
             <div className="text-center py-12">
               <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold">No workflow definitions found</h3>
@@ -167,21 +193,23 @@ export default function WorkflowDefinitionsPage() {
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
                           <FileText className="h-4 w-4 text-gray-400" />
-                          {definition.name}
+                          {definition.name || 'Unnamed Definition'}
                         </div>
                         {definition.description && (
-                          <p className="text-sm text-gray-500 mt-1">{definition.description}</p>
+                          <p className="text-sm text-gray-500 mt-1 truncate max-w-xs">
+                            {definition.description}
+                          </p>
                         )}
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="capitalize">
-                          {definition.workflowType.replace('_', ' ').toLowerCase()}
+                          {(definition.workflowType || '').replace('_', ' ').toLowerCase()}
                         </Badge>
                       </TableCell>
                       <TableCell>{definition.department || 'All'}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
-                          <span>{definition.stages.length}</span>
+                          <span>{(definition.stages || []).length}</span>
                           <span className="text-gray-400">stages</span>
                         </div>
                       </TableCell>
@@ -194,13 +222,16 @@ export default function WorkflowDefinitionsPage() {
                           {definition.isActive ? 'Active' : 'Inactive'}
                         </Badge>
                       </TableCell>
-                      <TableCell className="font-mono">v{definition.version}</TableCell>
+                      <TableCell className="font-mono">
+                        v{definition.version || '1.0'}
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Button
                             size="sm"
                             variant="ghost"
                             onClick={() => router.push(`/workflows/configurations/definitions/${definition._id}`)}
+                            title="View Details"
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -209,6 +240,7 @@ export default function WorkflowDefinitionsPage() {
                               size="sm"
                               variant="ghost"
                               onClick={() => router.push(`/workflows/configurations/definitions/${definition._id}/edit`)}
+                              title="Edit"
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -217,7 +249,7 @@ export default function WorkflowDefinitionsPage() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={() => handleToggleActive(definition._id, definition.isActive)}
+                              onClick={() => handleToggleActive(definition._id, definition.isActive || false)}
                               title={definition.isActive ? 'Deactivate' : 'Activate'}
                             >
                               {definition.isActive ? (
@@ -233,6 +265,7 @@ export default function WorkflowDefinitionsPage() {
                               variant="ghost"
                               onClick={() => handleDelete(definition._id)}
                               className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              title="Delete"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>

@@ -86,16 +86,24 @@ export function useAuth() {
   }, [clearUser, router]);
 
   // Permission checks using the store's hasPermission method
-  const hasPerm = useCallback(
+    const hasPerm = useCallback(
     (permission: string) => {
+      // Check if user has system:full_access
+      if (user?.permissions?.includes(PERMISSIONS.SYSTEM_FULL_ACCESS)) {
+        return true;
+      }
       return storeHasPermission(permission);
     },
-    [storeHasPermission]
+    [storeHasPermission, user]
   );
 
   // Alternative permission check using direct user permissions
   const checkPermission = useCallback(
     (permission: string) => {
+      // Check if user has system:full_access
+      if (user?.permissions?.includes(PERMISSIONS.SYSTEM_FULL_ACCESS)) {
+        return true;
+      }
       return user?.permissions?.includes(permission) || false;
     },
     [user]
@@ -104,6 +112,10 @@ export function useAuth() {
   const canAccess = useCallback(
     (requiredPermissions: string[]) => {
       if (!user) return false;
+      // Check if user has system:full_access
+      if (user?.permissions?.includes(PERMISSIONS.SYSTEM_FULL_ACCESS)) {
+        return true;
+      }
       return canAccessRoute(user, requiredPermissions as any);
     },
     [user]

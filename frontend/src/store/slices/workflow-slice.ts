@@ -82,6 +82,31 @@ interface WorkflowState {
   getAvailableWorkflowTypes: () => Promise<void>;
   getActiveWorkflowDefinitionByType: (workflowType: WorkflowType) => Promise<WorkflowDefinition | null>;
   
+  // NEW METHODS
+  getAllWorkflowInstances: (params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    workflowType?: WorkflowType;
+    department?: string;
+    search?: string;
+  }) => Promise<void>;
+  
+  getWorkflowInstancesByDepartment: (params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    workflowType?: WorkflowType;
+  }) => Promise<void>;
+  
+  delegateWorkflowInstance: (id: string, delegateeId: string) => Promise<WorkflowInstance>;
+  
+  searchWorkflowDefinitions: (params?: {
+    search?: string;
+    isActive?: boolean;
+    workflowType?: WorkflowType;
+  }) => Promise<void>;
+  
   // Utility
   setFilters: (filters: Partial<WorkflowState['filters']>) => void;
   clearError: () => void;
@@ -124,18 +149,6 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
       const workflowInstance = await workflowService.createWorkflowInstance(data);
       set({ isLoading: false });
       return workflowInstance;
-    } catch (error: any) {
-      set({ error: error.message, isLoading: false });
-      throw error;
-    }
-  },
-  
-  getMyWorkflows: async (params = {}) => {
-    set({ isLoading: true, error: null });
-    
-    try {
-      const workflows = await workflowService.getMyWorkflows(params);
-      set({ myWorkflows: workflows, isLoading: false });
     } catch (error: any) {
       set({ error: error.message, isLoading: false });
       throw error;
@@ -199,6 +212,99 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
         isLoading: false
       });
       
+      return workflowInstance;
+    } catch (error: any) {
+      set({ error: error.message, isLoading: false });
+      throw error;
+    }
+  },
+
+   getMyWorkflows: async (params?: {
+    initiatedByMe?: boolean;
+    status?: string;
+    workflowType?: WorkflowType;
+  }) => {
+    set({ isLoading: true, error: null });
+    
+    try {
+      const workflows = await workflowService.getMyWorkflows(params);
+      set({ 
+        myWorkflows: workflows,
+        isLoading: false 
+      });
+    } catch (error: any) {
+      set({ error: error.message, isLoading: false });
+      throw error;
+    }
+  },
+
+  // Get all workflow instances (for admin) - FIXED METHOD NAME
+  getAllWorkflowInstances: async (params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    workflowType?: WorkflowType;
+    department?: string;
+    search?: string;
+  }) => {
+    set({ isLoading: true, error: null });
+    
+    try {
+      const response = await workflowService.getAllWorkflowInstances(params);
+      set({ 
+        workflowInstances: response.data,
+        pagination: {
+          page: response.page,
+          limit: response.limit,
+          total: response.total,
+          totalPages: response.totalPages,
+          hasNextPage: response.hasNextPage,
+          hasPrevPage: response.hasPrevPage,
+        },
+        isLoading: false 
+      });
+    } catch (error: any) {
+      set({ error: error.message, isLoading: false });
+      throw error;
+    }
+  },
+  
+  // Get workflow instances by department
+  getWorkflowInstancesByDepartment: async (params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    workflowType?: WorkflowType;
+  }) => {
+    set({ isLoading: true, error: null });
+    
+    try {
+      const response = await workflowService.getWorkflowInstancesByDepartment(params);
+      set({ 
+        workflowInstances: response.data,
+        pagination: {
+          page: response.page,
+          limit: response.limit,
+          total: response.total,
+          totalPages: response.totalPages,
+          hasNextPage: response.hasNextPage,
+          hasPrevPage: response.hasPrevPage,
+        },
+        isLoading: false 
+      });
+    } catch (error: any) {
+      set({ error: error.message, isLoading: false });
+      throw error;
+    }
+  },
+  
+  // Delegate workflow instance
+  delegateWorkflowInstance: async (id: string, delegateeId: string) => {
+    set({ isLoading: true, error: null });
+    
+    try {
+      const workflowInstance = await workflowService.delegateWorkflowInstance(id, delegateeId);
+      set({ isLoading: false });
       return workflowInstance;
     } catch (error: any) {
       set({ error: error.message, isLoading: false });
@@ -299,6 +405,26 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
           hasPrevPage: response.hasPrevPage,
         },
         isLoading: false,
+      });
+    } catch (error: any) {
+      set({ error: error.message, isLoading: false });
+      throw error;
+    }
+  },
+  
+  // Search workflow definitions
+  searchWorkflowDefinitions: async (params?: {
+    search?: string;
+    isActive?: boolean;
+    workflowType?: WorkflowType;
+  }) => {
+    set({ isLoading: true, error: null });
+    
+    try {
+      const definitions = await workflowService.searchWorkflowDefinitions(params);
+      set({ 
+        workflowDefinitions: definitions,
+        isLoading: false 
       });
     } catch (error: any) {
       set({ error: error.message, isLoading: false });
