@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -16,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Plus, Trash2, ArrowLeft, Save, AlertCircle } from 'lucide-react';
+import { toast } from 'react-hot-toast'; // Import toast for notifications
 
 const DEFAULT_RULE_CONFIGS = {
   [ApprovalRule.SUPERVISOR]: { requiresDirectSupervisor: true },
@@ -37,6 +37,7 @@ export default function CreateWorkflowDefinitionPage() {
     availableWorkflowTypes,
     isLoading,
     error,
+    clearError,
   } = useWorkflowStore();
   
   const [formData, setFormData] = useState<CreateWorkflowDefinitionData>({
@@ -46,7 +47,7 @@ export default function CreateWorkflowDefinitionPage() {
     description: '',
     stages: [
       {
-        stage: 1, // CHANGED: Start from 1 instead of 0
+        stage: 1,
         name: 'Initial Approval',
         approvalRule: ApprovalRule.SUPERVISOR,
         ruleConfig: DEFAULT_RULE_CONFIGS[ApprovalRule.SUPERVISOR],
@@ -56,6 +57,7 @@ export default function CreateWorkflowDefinitionPage() {
   });
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [successMessage, setSuccessMessage] = useState<string>('');
 
   useEffect(() => {
     loadWorkflowTypes();
@@ -66,6 +68,7 @@ export default function CreateWorkflowDefinitionPage() {
       await getAvailableWorkflowTypes();
     } catch (error) {
       console.error('Failed to load workflow types:', error);
+      toast.error('Failed to load workflow types');
     }
   };
 
@@ -83,7 +86,6 @@ export default function CreateWorkflowDefinitionPage() {
     if (!formData.stages || formData.stages.length === 0) {
       errors.stages = 'At least one approval stage is required';
     } else {
-      // Validate sequential stage numbers starting from 1
       formData.stages.forEach((stage, index) => {
         if (!stage.name?.trim()) {
           errors[`stage_${index}_name`] = `Stage ${index + 1} name is required`;
@@ -91,7 +93,6 @@ export default function CreateWorkflowDefinitionPage() {
         if (!stage.approvalRule) {
           errors[`stage_${index}_rule`] = `Stage ${index + 1} approval rule is required`;
         }
-        // Check if stage number is sequential starting from 1
         if (stage.stage !== index + 1) {
           errors[`stage_${index}_number`] = `Stage numbers must be sequential (expected ${index + 1}, got ${stage.stage})`;
         }
@@ -104,34 +105,53 @@ export default function CreateWorkflowDefinitionPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSuccessMessage('');
+    clearError();
     
     if (!validateForm()) {
+      toast.error('Please fix the validation errors');
       return;
     }
 
     if (!hasPermission(PERMISSIONS.WORKFLOW_DEFINITIONS_CREATE)) {
-      alert('You do not have permission to create workflow definitions');
+      toast.error('You do not have permission to create workflow definitions');
       return;
     }
 
     try {
-      // Prepare the data for API - Ensure sequential stage numbers starting from 1
+      // Prepare the data for API
       const submissionData = {
         ...formData,
         stages: formData.stages.map((stage, index) => ({
           ...stage,
-          stage: index + 1, // CHANGED: Ensure sequential stage numbers starting from 1
+          stage: index + 1,
         })),
       };
 
-      console.log('Submitting workflow definition:', submissionData); // Debug log
+      console.log('Submitting workflow definition:', submissionData);
       
-      await createWorkflowDefinition(submissionData);
-      alert('Workflow definition created successfully!');
-      router.push('/workflows/configurations/definitions');
+      // Create the workflow definition
+      const result = await createWorkflowDefinition(submissionData);
+      
+      // Show success message
+      toast.success('Workflow definition created successfully!');
+      
+      // Redirect after a short delay
+      setTimeout(() => {
+        router.push('/workflows/configurations/definitions');
+      }, 1500);
+      
     } catch (error: any) {
       console.error('Failed to create workflow definition:', error);
-      alert(`Failed to create workflow definition: ${error.message || 'Unknown error'}`);
+      
+      // Show error in toast
+      toast.error(`Failed to create workflow definition: ${error.message || 'Unknown error'}`);
+      
+      // Also show in the alert component
+      if (error.message) {
+        // The error is already set in the store by createWorkflowDefinition
+        // So we don't need to set it here
+      }
     }
   };
 
@@ -141,7 +161,7 @@ export default function CreateWorkflowDefinitionPage() {
       stages: [
         ...prev.stages,
         {
-          stage: prev.stages.length + 1, // CHANGED: Start from 1, not 0
+          stage: prev.stages.length + 1,
           name: `Stage ${prev.stages.length + 1}`,
           approvalRule: ApprovalRule.SUPERVISOR,
           ruleConfig: DEFAULT_RULE_CONFIGS[ApprovalRule.SUPERVISOR],
@@ -152,7 +172,7 @@ export default function CreateWorkflowDefinitionPage() {
 
   const removeStage = (index: number) => {
     if (formData.stages.length <= 1) {
-      alert('At least one stage is required');
+      toast.error('At least one stage is required');
       return;
     }
 
@@ -162,7 +182,7 @@ export default function CreateWorkflowDefinitionPage() {
         .filter((_, i) => i !== index)
         .map((stage, i) => ({
           ...stage,
-          stage: i + 1, // CHANGED: Recalculate stage numbers starting from 1
+          stage: i + 1,
         }))
     }));
   };
@@ -174,7 +194,6 @@ export default function CreateWorkflowDefinitionPage() {
         if (i === index) {
           const updatedStage = { ...stage, [field]: value };
           
-          // When approval rule changes, update ruleConfig
           if (field === 'approvalRule') {
             updatedStage.ruleConfig = DEFAULT_RULE_CONFIGS[value as ApprovalRule] || {};
           }
@@ -227,6 +246,13 @@ export default function CreateWorkflowDefinitionPage() {
         </div>
       </div>
 
+      {/* Success Message */}
+      {successMessage && (
+        <Alert className="bg-green-50 border-green-200 text-green-800">
+          <AlertDescription>{successMessage}</AlertDescription>
+        </Alert>
+      )}
+
       {/* Error Display */}
       {error && (
         <Alert variant="destructive">
@@ -277,7 +303,6 @@ export default function CreateWorkflowDefinitionPage() {
                           </SelectItem>
                         ))
                       ) : (
-                        // Fallback to enum values if API doesn't return types
                         Object.values(WorkflowType).map((type) => (
                           <SelectItem key={type} value={type}>
                             {type.replace('_', ' ').toLowerCase()
@@ -364,7 +389,7 @@ export default function CreateWorkflowDefinitionPage() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <div className="h-8 w-8 rounded-full bg-requesta-primary text-white flex items-center justify-center">
-                              {stage.stage} {/* Show actual stage number */}
+                              {stage.stage}
                             </div>
                             <h3 className="font-semibold">Stage {stage.stage}</h3>
                             {formErrors[`stage_${index}_number`] && (
@@ -573,7 +598,6 @@ export default function CreateWorkflowDefinitionPage() {
                   variant="ghost" 
                   className="w-full"
                   onClick={() => {
-                    // Reset form
                     setFormData({
                       name: '',
                       workflowType: WorkflowType.LEAVE_REQUEST,
@@ -581,7 +605,7 @@ export default function CreateWorkflowDefinitionPage() {
                       description: '',
                       stages: [
                         {
-                          stage: 1, // CHANGED: Start from 1
+                          stage: 1,
                           name: 'Initial Approval',
                           approvalRule: ApprovalRule.SUPERVISOR,
                           ruleConfig: DEFAULT_RULE_CONFIGS[ApprovalRule.SUPERVISOR],
@@ -590,6 +614,8 @@ export default function CreateWorkflowDefinitionPage() {
                       isActive: true,
                     });
                     setFormErrors({});
+                    setSuccessMessage('');
+                    clearError();
                   }}
                 >
                   Reset Form

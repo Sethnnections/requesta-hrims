@@ -522,28 +522,28 @@ async getWorkflowInstancesByDepartment(params?: {
     return data.types || [];
   }
 
-  async getActiveWorkflowDefinitionByType(workflowType: WorkflowType): Promise<WorkflowDefinition | null> {
-    const token = localStorage.getItem('accessToken');
-    
-    const response = await fetch(`${this.baseUrl}/workflow-definitions/active/${workflowType}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
+async getActiveWorkflowDefinitionByType(workflowType: WorkflowType): Promise<WorkflowDefinition | null> {
+  const token = localStorage.getItem('accessToken');
+  
+  const response = await fetch(`${this.baseUrl}/workflow-definitions/active/${workflowType}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
 
+  if (!response.ok) {
     if (response.status === 404) {
-      return null;
+      return null; // No active definition found for this type
     }
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch active workflow definition');
-    }
-
-    return response.json();
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to fetch active workflow definition');
   }
 
-
+  return response.json();
 }
+} // Add closing brace for the class
+
+
 
 export const workflowService = new WorkflowService();

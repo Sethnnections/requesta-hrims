@@ -383,34 +383,59 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
     }
   },
   
-  getWorkflowDefinitions: async (params = {}) => {
-    set({ isLoading: true, error: null });
+  // In workflow-slice.ts, update the getWorkflowDefinitions method:
+
+getWorkflowDefinitions: async (params = {}) => {
+  set({ isLoading: true, error: null });
+  
+  try {
+    const { page = 1, limit = 10, ...filters } = params;
+    const response = await workflowService.getWorkflowDefinitions({
+      page,
+      limit,
+      ...filters,
+    });
     
-    try {
-      const { page = 1, limit = 10, ...filters } = params;
-      const response = await workflowService.getWorkflowDefinitions({
-        page,
-        limit,
-        ...filters,
-      });
-      
-      set({
-        workflowDefinitions: response.data,
-        pagination: {
-          page: response.page,
-          limit: response.limit,
-          total: response.total,
-          totalPages: response.totalPages,
-          hasNextPage: response.hasNextPage,
-          hasPrevPage: response.hasPrevPage,
-        },
-        isLoading: false,
-      });
-    } catch (error: any) {
-      set({ error: error.message, isLoading: false });
-      throw error;
+    // Handle both array response and paginated response
+    let definitions: WorkflowDefinition[] = [];
+    let total = 0;
+    let totalPages = 0;
+    
+    if (Array.isArray(response)) {
+      // Backend returned an array directly
+      definitions = response;
+      total = response.length;
+      totalPages = 1;
+    } else if (response.data && Array.isArray(response.data)) {
+      // Backend returned a paginated response
+      definitions = response.data;
+      total = response.total || response.data.length;
+      totalPages = response.totalPages || 1;
+    } else {
+      // Unexpected response format
+      console.warn('Unexpected response format from getWorkflowDefinitions:', response);
+      definitions = Array.isArray(response) ? response : [];
+      total = definitions.length;
+      totalPages = 1;
     }
-  },
+    
+    set({
+      workflowDefinitions: definitions,
+      pagination: {
+        page: page,
+        limit: limit,
+        total: total,
+        totalPages: totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+      isLoading: false,
+    });
+  } catch (error: any) {
+    set({ error: error.message, isLoading: false });
+    throw error;
+  }
+},
   
   // Search workflow definitions
   searchWorkflowDefinitions: async (params?: {
